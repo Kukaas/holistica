@@ -11,13 +11,13 @@ This checklist tracks the progress of the Holistica Community Protocol & Discuss
 - [x] Configure API base URL connection
 - [x] Prepare `.env.example` files
 
-## Phase 2: Core Data Architecture [ ]
-- [ ] Create `Protocol` model (title, content, tags, author, rating)
-- [ ] Create `Thread` model (title, body, associated protocol)
-- [ ] Create `Comment` model (threaded replies structure)
-- [ ] Create `Review` model (rating 1–5 + feedback)
-- [ ] Create `Vote` model (polymorphic upvote/downvote system)
-- [ ] Define Eloquent relationships (foreign keys, morphs)
+## Phase 2: Core Data Architecture [x]
+- [x] Create `Protocol` model (title, content, tags, author, rating)
+- [x] Create `Thread` model (title, body, associated protocol)
+- [x] Create `Comment` model (threaded replies structure)
+- [x] Create `Review` model (rating 1–5 + feedback)
+- [x] Create `Vote` model (polymorphic upvote/downvote system)
+- [x] Define Eloquent relationships (foreign keys, morphs)
 
 ## Phase 3: CRUD Operations & Seeding [ ]
 - [ ] Implement RESTful API endpoints for all models
