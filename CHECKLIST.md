@@ -19,12 +19,12 @@ This checklist tracks the progress of the Holistica Community Protocol & Discuss
 - [x] Create `Vote` model (polymorphic upvote/downvote system)
 - [x] Define Eloquent relationships (foreign keys, morphs)
 
-## Phase 3: CRUD Operations & Seeding [ ]
-- [ ] Implement RESTful API endpoints for all models
-- [ ] Add validation and HTTP status codes
-- [ ] Implement pagination for list endpoints
-- [ ] Create Factories and Seeders (12+ protocols, 10+ threads)
-- [ ] Seed realistic mock data (comments, reviews, votes)
+## Phase 3: CRUD Operations & Seeding [x]
+- [x] Implement RESTful API endpoints for all models
+- [x] Add validation and HTTP status codes
+- [x] Implement pagination for list endpoints
+- [x] Create Factories and Seeders (12+ protocols, 10+ threads)
+- [x] Seed realistic mock data (comments, reviews, votes)
 
 ## Phase 4: Typesense Search Integration [ ]
 - [ ] Create Typesense collections for `Protocols` and `Threads`

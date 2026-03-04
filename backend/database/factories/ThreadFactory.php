@@ -5,9 +5,9 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Comment>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Thread>
  */
-class CommentFactory extends Factory
+class ThreadFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -17,9 +17,7 @@ class CommentFactory extends Factory
     public function definition(): array
     {
         return [
-            'thread_id' => \App\Models\Thread::factory(),
-            'user_id' => \App\Models\User::factory(),
-            'content' => $this->faker->paragraph(),
+            //
         ];
     }
 }

@@ -17,7 +17,10 @@ class VoteFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'user_id' => \App\Models\User::factory(),
+            'votable_id' => 1, // Will be overridden in seeder
+            'votable_type' => \App\Models\Thread::class , // Will be overridden in seeder
+            'value' => $this->faker->randomElement([1, -1]),
         ];
     }
 }

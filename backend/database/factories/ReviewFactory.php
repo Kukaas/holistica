@@ -17,7 +17,10 @@ class ReviewFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'protocol_id' => \App\Models\Protocol::factory(),
+            'user_id' => \App\Models\User::factory(),
+            'rating' => $this->faker->numberBetween(1, 5),
+            'content' => $this->faker->sentence(),
         ];
     }
 }
