@@ -24,6 +24,8 @@ import { Label } from "@/components/ui/label";
 export default function ThreadDetail() {
     const { id } = useParams();
     const [thread, setThread] = useState<any>(null);
+    const [commentsData, setCommentsData] = useState<any>(null);
+    const [commentsPage, setCommentsPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [commentContent, setCommentContent] = useState("");
@@ -34,10 +36,21 @@ export default function ThreadDetail() {
         try {
             const response = await api.get(`/threads/${id}`);
             setThread(response.data);
+            fetchComments(1);
         } catch (error) {
             console.error("Error fetching thread:", error);
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function fetchComments(page: number) {
+        try {
+            const response = await api.get(`/threads/${id}/comments?page=${page}`);
+            setCommentsData(response.data);
+            setCommentsPage(page);
+        } catch (error) {
+            console.error("Error fetching comments:", error);
         }
     }
 
@@ -57,7 +70,8 @@ export default function ThreadDetail() {
             setCommentContent("");
             setParentId(null);
             setShowCommentDialog(false);
-            fetchThread();
+            fetchComments(1); // Refresh first page
+            fetchThread(); // Refresh thread metadata (like count)
         } catch (error) {
             console.error("Error creating comment:", error);
         } finally {
@@ -77,52 +91,79 @@ export default function ThreadDetail() {
 
     if (!thread) return <div className="container py-24 text-center">Thread not found.</div>;
 
-    // Simple comment nesting helper
-    const renderComments = (comments: any[], pId: any = null, depth = 0) => {
-        return comments
-            .filter((c) => (pId === null ? !c.parent_id : c.parent_id === pId))
-            .map((comment) => (
-                <div key={comment.id} className="space-y-6">
-                    <div className={cn("space-y-6", depth > 0 ? "ml-8 border-l-2 border-muted pl-10" : "border-b border-muted/20 pb-12 pt-6")}>
-                        <div className="flex gap-6">
-                            <Avatar className="h-10 w-10 border-2 border-muted rounded-none">
-                                <AvatarFallback className="text-[10px] font-black rounded-none">
-                                    {comment.user?.name?.slice(0, 2).toUpperCase() || "UN"}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 space-y-3">
-                                <div className="flex items-center gap-4">
-                                    <span className="text-sm font-black uppercase tracking-widest text-foreground">{comment.user?.name || "Anonymous"}</span>
-                                    <span className="text-[10px] font-bold text-muted-foreground/50">
-                                        {new Date(comment.created_at).toLocaleDateString()}
-                                    </span>
+    // Nested Comment Item Component for handle expansion
+    const CommentItem = ({ comment, allComments, depth = 0 }: { comment: any, allComments: any[], depth: number }) => {
+        const [isExpanded, setIsExpanded] = useState(false);
+        const replies = allComments.filter((c) => c.parent_id === comment.id);
+        const hasReplies = replies.length > 0;
+
+        return (
+            <div className="space-y-6">
+                <div className={cn("space-y-6", depth > 0 ? "ml-8 border-l-2 border-muted pl-10" : "border-b border-muted/20 pb-12 pt-6")}>
+                    <div className="flex gap-6">
+                        <Avatar className="h-10 w-10 border-2 border-muted rounded-none">
+                            <AvatarFallback className="text-[10px] font-black rounded-none">
+                                {comment.user?.name?.slice(0, 2).toUpperCase() || "UN"}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 space-y-3">
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm font-black uppercase tracking-widest text-foreground">{comment.user?.name || "Anonymous"}</span>
+                                <span className="text-[10px] font-bold text-muted-foreground/50">
+                                    {new Date(comment.created_at).toLocaleDateString()}
+                                </span>
+                            </div>
+                            <p className="text-[15px] font-medium text-foreground/80 leading-relaxed max-w-2xl">{comment.content}</p>
+                            <div className="flex items-center gap-6 pt-2">
+                                <div className="flex items-center py-1 px-4 border-2 border-muted hover:border-foreground transition-all">
+                                    <Voting
+                                        type="comment"
+                                        id={comment.id}
+                                        initialUps={comment.ups || 0}
+                                        initialDowns={comment.downs || 0}
+                                    />
                                 </div>
-                                <p className="text-[15px] font-medium text-foreground/80 leading-relaxed max-w-2xl">{comment.content}</p>
-                                <div className="flex items-center gap-6 pt-2">
-                                    <div className="flex items-center py-1 px-4 border-2 border-muted hover:border-foreground transition-all">
-                                        <Voting
-                                            type="comment"
-                                            id={comment.id}
-                                            initialUps={comment.ups || 0}
-                                            initialDowns={comment.downs || 0}
-                                        />
-                                    </div>
+                                <button
+                                    onClick={() => {
+                                        setParentId(comment.id);
+                                        setShowCommentDialog(true);
+                                    }}
+                                    className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    Reply
+                                </button>
+                                {hasReplies && (
                                     <button
-                                        onClick={() => {
-                                            setParentId(comment.id);
-                                            setShowCommentDialog(true);
-                                        }}
-                                        className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors"
+                                        onClick={() => setIsExpanded(!isExpanded)}
+                                        className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground hover:opacity-70 transition-opacity flex items-center gap-2"
                                     >
-                                        Reply
+                                        {isExpanded ? "Hide" : "Show"} Replies ({replies.length})
                                     </button>
-                                </div>
+                                )}
                             </div>
                         </div>
-                        {renderComments(comments, comment.id, depth + 1)}
                     </div>
+
+                    {isExpanded && hasReplies && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden"
+                        >
+                            {replies.map((reply) => (
+                                <CommentItem
+                                    key={reply.id}
+                                    comment={reply}
+                                    allComments={allComments}
+                                    depth={depth + 1}
+                                />
+                            ))}
+                        </motion.div>
+                    )}
                 </div>
-            ));
+            </div>
+        );
     };
 
     return (
@@ -213,8 +254,40 @@ export default function ThreadDetail() {
                 </Dialog>
 
                 <div className="space-y-16">
-                    {thread.comments?.length > 0 ? (
-                        renderComments(thread.comments)
+                    {commentsData?.data?.length > 0 ? (
+                        <>
+                            {commentsData.data.map((comment: any) => (
+                                <CommentItem
+                                    key={comment.id}
+                                    comment={comment}
+                                    allComments={commentsData.data}
+                                    depth={0}
+                                />
+                            ))}
+
+                            {commentsData.last_page > 1 && (
+                                <div className="flex justify-start gap-4 mt-12">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={commentsPage === 1}
+                                        onClick={() => fetchComments(commentsPage - 1)}
+                                        className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-8 h-12"
+                                    >
+                                        Prev
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={commentsPage === commentsData.last_page}
+                                        onClick={() => fetchComments(commentsPage + 1)}
+                                        className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-8 h-12"
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            )}
+                        </>
                     ) : (
                         <div className="py-32 text-center border-4 border-dashed rounded-[3rem] border-muted/20">
                             <p className="text-xs font-black text-muted-foreground/20 uppercase tracking-[0.4em]">No dialogue found</p>

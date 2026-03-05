@@ -8,6 +8,7 @@ import { MessageSquare, Search, ArrowLeft, Clock, User, Link as LinkIcon } from 
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function DiscussionsBrowse() {
     const [threads, setThreads] = useState<any[]>([]);
@@ -117,7 +118,9 @@ export default function DiscussionsBrowse() {
                                         <div className="flex items-center gap-10">
                                             <div className="flex flex-col items-center">
                                                 <MessageSquare className="h-5 w-5 mb-1 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
-                                                <span className="text-[10px] font-black">{thread.comments_count || 0}</span>
+                                                <span className="text-[10px] font-black uppercase tracking-tighter">
+                                                    {thread.comments_count || 0} {thread.comments_count === 1 ? 'comment' : 'comments'}
+                                                </span>
                                             </div>
                                             <div className="flex flex-col items-center">
                                                 <Badge variant="outline" className="border-2 rounded-none text-[10px] uppercase font-black px-6 py-2 group-hover:bg-foreground group-hover:text-background transition-colors h-10 flex items-center justify-center">
@@ -137,22 +140,33 @@ export default function DiscussionsBrowse() {
                 )}
             </div>
 
-            {/* Pagination placeholder */}
+            {/* Pagination Controls */}
             {pagination && pagination.last_page > 1 && (
                 <div className="mt-20 flex justify-center gap-4">
                     <Button
                         variant="outline"
+                        size="sm"
                         disabled={page === 1}
-                        onClick={() => setPage(p => p - 1)}
-                        className="rounded-none border-2 font-black uppercase tracking-widest text-[10px]"
+                        onClick={() => {
+                            setPage(p => p - 1);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="rounded-none border-2 font-black uppercase tracking-widest text-[10px] px-8 h-12"
                     >
                         Prev
                     </Button>
+                    <div className="flex items-center px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">
+                        Page {page} of {pagination.last_page}
+                    </div>
                     <Button
                         variant="outline"
+                        size="sm"
                         disabled={page === pagination.last_page}
-                        onClick={() => setPage(p => p + 1)}
-                        className="rounded-none border-2 font-black uppercase tracking-widest text-[10px]"
+                        onClick={() => {
+                            setPage(p => p + 1);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="rounded-none border-2 font-black uppercase tracking-widest text-[10px] px-8 h-12"
                     >
                         Next
                     </Button>
@@ -161,7 +175,3 @@ export default function DiscussionsBrowse() {
         </div>
     );
 }
-
-// Minimal Button shim if not using shadcn Button directly here for some reason,
-// but I'll assume it exists in @/components/ui/button
-import { Button } from "@/components/ui/button";

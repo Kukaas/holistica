@@ -26,8 +26,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Public Read Routes
 Route::get('protocols', [ProtocolController::class , 'index']);
+Route::get('protocols/{protocol}/threads', [ProtocolController::class , 'threads']);
+Route::get('protocols/{protocol}/reviews', [ProtocolController::class , 'reviews']);
 Route::get('protocols/{protocol}', [ProtocolController::class , 'show']);
 Route::get('threads', [ThreadController::class , 'index']);
+Route::get('threads/{thread}/comments', [ThreadController::class , 'comments']);
 Route::get('threads/{thread}', [ThreadController::class , 'show']);
 Route::get('comments', [CommentController::class , 'index']);
 Route::get('reviews', [ReviewController::class , 'index']);

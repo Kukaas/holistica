@@ -13,18 +13,33 @@ class ThreadController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Thread::query()->with(['user', 'protocol']);
+        $query = Thread::query()->with(['user', 'protocol'])->withCount('comments');
 
         if ($request->has('protocol_id')) {
             $query->where('protocol_id', $request->protocol_id);
         }
 
-        return $query->paginate(15);
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where('title', 'like', "%{$search}%");
+        }
+
+        return $query->latest()->paginate(15);
     }
 
     public function show(Thread $thread)
     {
-        return $thread->load(['user', 'protocol', 'comments.user', 'comments.votes']);
+        return $thread->loadCount('comments')->load(['user', 'protocol']);
+    }
+
+    public function comments(Thread $thread)
+    {
+        // Paginate root comments only, eagerly loading replies
+        return $thread->comments()
+            ->whereNull('parent_id')
+            ->with(['user', 'votes', 'replies.user', 'replies.votes'])
+            ->latest()
+            ->paginate(10);
     }
 
     /**

@@ -28,6 +28,10 @@ export default function ProtocolDetail() {
     const { user } = useAuth();
     const { id } = useParams();
     const [protocol, setProtocol] = useState<any>(null);
+    const [threadsData, setThreadsData] = useState<any>(null);
+    const [reviewsData, setReviewsData] = useState<any>(null);
+    const [threadsPage, setThreadsPage] = useState(1);
+    const [reviewsPage, setReviewsPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
@@ -42,10 +46,32 @@ export default function ProtocolDetail() {
         try {
             const response = await api.get(`/protocols/${id}`);
             setProtocol(response.data);
+            fetchThreads(1);
+            fetchReviews(1);
         } catch (error) {
             console.error("Error fetching protocol:", error);
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function fetchThreads(page: number) {
+        try {
+            const response = await api.get(`/protocols/${id}/threads?page=${page}`);
+            setThreadsData(response.data);
+            setThreadsPage(page);
+        } catch (error) {
+            console.error("Error fetching threads:", error);
+        }
+    }
+
+    async function fetchReviews(page: number) {
+        try {
+            const response = await api.get(`/protocols/${id}/reviews?page=${page}`);
+            setReviewsData(response.data);
+            setReviewsPage(page);
+        } catch (error) {
+            console.error("Error fetching reviews:", error);
         }
     }
 
@@ -69,7 +95,8 @@ export default function ProtocolDetail() {
             });
             setThreadTitle("");
             setShowThreadDialog(false);
-            fetchProtocol(); // Refresh data
+            fetchThreads(1); // Refresh threads
+            fetchProtocol(); // Refresh count
         } catch (error) {
             console.error("Error creating thread:", error);
         } finally {
@@ -94,7 +121,8 @@ export default function ProtocolDetail() {
             });
             setReviewComment("");
             setShowReviewDialog(false);
-            fetchProtocol(); // Refresh data
+            fetchReviews(1); // Refresh reviews
+            fetchProtocol(); // Refresh rating/count
         } catch (error) {
             console.error("Error creating review:", error);
         } finally {
@@ -235,6 +263,7 @@ export default function ProtocolDetail() {
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="font-black uppercase text-[10px]">Feedback (Required)</Label>
+                                        <span className="text-[8px] text-muted-foreground block -mt-1 mb-1">Detailed experience helps others</span>
                                         <Textarea
                                             value={reviewComment}
                                             onChange={(e) => setReviewComment(e.target.value)}
@@ -281,11 +310,11 @@ export default function ProtocolDetail() {
                     </div>
                 </div>
 
-                {protocol.threads?.length > 0 ? (
+                {threadsData?.data?.length > 0 ? (
                     <div className="grid gap-6">
-                        {protocol.threads.map((thread: any) => (
+                        {threadsData.data.map((thread: any) => (
                             <Link key={thread.id} href={`/discussions/${thread.id}`}>
-                                <div className="p-10 rounded-none border-2 border-muted hover:border-foreground transition-all bg-muted/5 group">
+                                <div className="p-10 rounded-none border-2 border-muted hover:border-foreground transition-all bg-muted/5 group shadow-[0px_0px_0px_0px_rgba(0,0,0,0)] hover:shadow-2xl hover:shadow-muted/20">
                                     <h3 className="text-xl font-black mb-4 group-hover:translate-x-1 transition-transform">{thread.title}</h3>
                                     <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
                                         <span className="flex items-center gap-2">
@@ -300,6 +329,29 @@ export default function ProtocolDetail() {
                                 </div>
                             </Link>
                         ))}
+
+                        {threadsData.last_page > 1 && (
+                            <div className="flex justify-start gap-4 mt-4">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={threadsPage === 1}
+                                    onClick={() => fetchThreads(threadsPage - 1)}
+                                    className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-6"
+                                >
+                                    Prev
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={threadsPage === threadsData.last_page}
+                                    onClick={() => fetchThreads(threadsPage + 1)}
+                                    className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-6"
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="py-24 text-center border-4 border-dashed rounded-[3rem] border-muted/20">
@@ -317,9 +369,9 @@ export default function ProtocolDetail() {
                     </div>
                 </div>
 
-                {protocol.reviews?.length > 0 ? (
+                {reviewsData?.data?.length > 0 ? (
                     <div className="grid gap-10">
-                        {protocol.reviews.map((review: any) => (
+                        {reviewsData.data.map((review: any) => (
                             <div key={review.id} className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -347,6 +399,29 @@ export default function ProtocolDetail() {
                                 </p>
                             </div>
                         ))}
+
+                        {reviewsData.last_page > 1 && (
+                            <div className="flex justify-start gap-4 mt-4">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={reviewsPage === 1}
+                                    onClick={() => fetchReviews(reviewsPage - 1)}
+                                    className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-6"
+                                >
+                                    Prev
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={reviewsPage === reviewsData.last_page}
+                                    onClick={() => fetchReviews(reviewsPage + 1)}
+                                    className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-6"
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="py-24 text-center border-4 border-dashed rounded-[3rem] border-muted/20">

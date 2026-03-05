@@ -96,7 +96,17 @@ class ProtocolController extends Controller
 
     public function show(Protocol $protocol)
     {
-        return $protocol->loadCount(['threads', 'reviews'])->load(['author', 'threads.user', 'reviews.user']);
+        return $protocol->loadCount(['threads', 'reviews'])->load(['author']);
+    }
+
+    public function threads(Protocol $protocol)
+    {
+        return $protocol->threads()->with('user')->withCount('comments')->latest()->paginate(5);
+    }
+
+    public function reviews(Protocol $protocol)
+    {
+        return $protocol->reviews()->with('user')->latest()->paginate(5);
     }
 
     /**
