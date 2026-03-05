@@ -24,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import { CommentItem } from "@/components/CommentItem";
 import { useAuth } from "@/context/AuthContext";
 import { Edit, Trash } from "lucide-react";
+import { toast } from "sonner";
+import { ThreadDetailSkeleton, CommentItemSkeleton } from "@/components/ItemSkeleton";
 
 export default function ThreadDetail() {
     const { id } = useParams();
@@ -33,6 +35,7 @@ export default function ThreadDetail() {
     const [commentsData, setCommentsData] = useState<any>(null);
     const [commentsPage, setCommentsPage] = useState(1);
     const [loading, setLoading] = useState(true);
+    const [loadingComments, setLoadingComments] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [commentContent, setCommentContent] = useState("");
     const [parentId, setParentId] = useState<string | null>(null);
@@ -56,12 +59,15 @@ export default function ThreadDetail() {
     }
 
     async function fetchComments(page: number) {
+        setLoadingComments(true);
         try {
             const response = await api.get(`/threads/${id}/comments?page=${page}`);
             setCommentsData(response.data);
             setCommentsPage(page);
         } catch (error) {
             console.error("Error fetching comments:", error);
+        } finally {
+            setLoadingComments(false);
         }
     }
 
@@ -72,6 +78,7 @@ export default function ThreadDetail() {
     const handleCreateComment = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
+        const toastId = toast.loading("Posting reply...");
         try {
             await api.post("/comments", {
                 thread_id: id,
@@ -83,8 +90,10 @@ export default function ThreadDetail() {
             setShowCommentDialog(false);
             fetchComments(1); // Refresh first page
             fetchThread(); // Refresh thread metadata (like count)
+            toast.success("Reply posted!", { id: toastId });
         } catch (error) {
             console.error("Error creating comment:", error);
+            toast.error("Failed to post reply.", { id: toastId });
         } finally {
             setSubmitting(false);
         }
@@ -93,12 +102,15 @@ export default function ThreadDetail() {
     const handleThreadEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmittingThread(true);
+        const toastId = toast.loading("Updating discussion...");
         try {
             await api.put(`/threads/${id}`, { title: editThreadTitle });
             setIsEditingThread(false);
             fetchThread();
+            toast.success("Discussion updated!", { id: toastId });
         } catch (error) {
             console.error("Error updating thread:", error);
+            toast.error("Failed to update discussion.", { id: toastId });
         } finally {
             setSubmittingThread(false);
         }
@@ -106,22 +118,19 @@ export default function ThreadDetail() {
 
     const handleThreadDelete = async () => {
         if (!confirm("Are you sure you want to delete this discussion?")) return;
+        const toastId = toast.loading("Deleting discussion...");
         try {
             await api.delete(`/threads/${id}`);
+            toast.success("Discussion deleted!", { id: toastId });
             router.push("/discussions");
         } catch (error) {
             console.error("Error deleting thread:", error);
+            toast.error("Failed to delete discussion.", { id: toastId });
         }
     };
 
     if (loading) {
-        return (
-            <div className="container py-24 animate-pulse">
-                <div className="h-4 w-32 bg-muted rounded mb-12" />
-                <div className="h-10 w-2/3 bg-muted rounded mb-6" />
-                <div className="h-32 w-full bg-muted rounded" />
-            </div>
-        );
+        return <ThreadDetailSkeleton />;
     }
 
     if (!thread) return <div className="container py-24 text-center">Thread not found.</div>;
@@ -252,7 +261,13 @@ export default function ThreadDetail() {
                 </Dialog>
 
                 <div className="space-y-16">
-                    {commentsData?.data?.length > 0 ? (
+                    {loadingComments ? (
+                        <div className="space-y-6">
+                            {Array(3).fill(0).map((_, i) => (
+                                <CommentItemSkeleton key={i} />
+                            ))}
+                        </div>
+                    ) : commentsData?.data?.length > 0 ? (
                         <>
                             {commentsData.data.map((comment: any) => (
                                 <CommentItem

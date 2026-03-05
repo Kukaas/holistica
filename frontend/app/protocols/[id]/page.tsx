@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { ThreadItemSkeleton, ReviewItemSkeleton } from "@/components/ItemSkeleton";
 
 export default function ProtocolDetail() {
     const { user } = useAuth();
@@ -33,6 +34,8 @@ export default function ProtocolDetail() {
     const [threadsPage, setThreadsPage] = useState(1);
     const [reviewsPage, setReviewsPage] = useState(1);
     const [loading, setLoading] = useState(true);
+    const [loadingThreads, setLoadingThreads] = useState(true);
+    const [loadingReviews, setLoadingReviews] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
     // Form States
@@ -56,22 +59,28 @@ export default function ProtocolDetail() {
     }
 
     async function fetchThreads(page: number) {
+        setLoadingThreads(true);
         try {
             const response = await api.get(`/protocols/${id}/threads?page=${page}`);
             setThreadsData(response.data);
             setThreadsPage(page);
         } catch (error) {
             console.error("Error fetching threads:", error);
+        } finally {
+            setLoadingThreads(false);
         }
     }
 
     async function fetchReviews(page: number) {
+        setLoadingReviews(true);
         try {
             const response = await api.get(`/protocols/${id}/reviews?page=${page}`);
             setReviewsData(response.data);
             setReviewsPage(page);
         } catch (error) {
             console.error("Error fetching reviews:", error);
+        } finally {
+            setLoadingReviews(false);
         }
     }
 
@@ -310,7 +319,13 @@ export default function ProtocolDetail() {
                     </div>
                 </div>
 
-                {threadsData?.data?.length > 0 ? (
+                {loadingThreads ? (
+                    <div className="grid gap-6">
+                        {Array(3).fill(0).map((_, i) => (
+                            <ThreadItemSkeleton key={i} />
+                        ))}
+                    </div>
+                ) : threadsData?.data?.length > 0 ? (
                     <div className="grid gap-6">
                         {threadsData.data.map((thread: any) => (
                             <Link key={thread.id} href={`/discussions/${thread.id}`}>
@@ -369,7 +384,13 @@ export default function ProtocolDetail() {
                     </div>
                 </div>
 
-                {reviewsData?.data?.length > 0 ? (
+                {loadingReviews ? (
+                    <div className="grid gap-10">
+                        {Array(3).fill(0).map((_, i) => (
+                            <ReviewItemSkeleton key={i} />
+                        ))}
+                    </div>
+                ) : reviewsData?.data?.length > 0 ? (
                     <div className="grid gap-10">
                         {reviewsData.data.map((review: any) => (
                             <div key={review.id} className="space-y-4">

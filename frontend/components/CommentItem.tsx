@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Trash, Edit } from "lucide-react";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 interface CommentItemProps {
     comment: any;
@@ -35,12 +36,15 @@ export function CommentItem({ comment, allComments, depth = 0, onReply, onUpdate
     const handleEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
+        const toastId = toast.loading("Updating comment...");
         try {
             await api.put(`/comments/${comment.id}`, { content: editContent });
             setIsEditing(false);
             onUpdate();
+            toast.success("Comment updated successfully!", { id: toastId });
         } catch (error) {
             console.error("Error updating comment:", error);
+            toast.error("Failed to update comment.", { id: toastId });
         } finally {
             setSubmitting(false);
         }
@@ -48,11 +52,14 @@ export function CommentItem({ comment, allComments, depth = 0, onReply, onUpdate
 
     const handleDelete = async () => {
         if (!confirm("Are you sure you want to delete this comment?")) return;
+        const toastId = toast.loading("Deleting comment...");
         try {
             await api.delete(`/comments/${comment.id}`);
             onUpdate();
+            toast.success("Comment deleted successfully!", { id: toastId });
         } catch (error) {
             console.error("Error deleting comment:", error);
+            toast.error("Failed to delete comment.", { id: toastId });
         }
     };
 

@@ -9,6 +9,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { DiscussionListSkeleton } from "@/components/ItemSkeleton";
 
 export default function DiscussionsBrowse() {
     const [threads, setThreads] = useState<any[]>([]);
@@ -79,9 +80,7 @@ export default function DiscussionsBrowse() {
             {/* Discussions List */}
             <div className="space-y-6">
                 {loading ? (
-                    Array(6).fill(0).map((_, i) => (
-                        <div key={i} className="h-32 rounded-none bg-muted animate-pulse border-2" />
-                    ))
+                    <DiscussionListSkeleton />
                 ) : threads.length > 0 ? (
                     threads.map((thread, i) => (
                         <motion.div
