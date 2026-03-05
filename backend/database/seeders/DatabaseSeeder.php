@@ -15,8 +15,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create 10 users first
-        $users = \App\Models\User::factory(10)->create();
+        // Create specific user first
+        $users = collect([]);
+        $users->push(\App\Models\User::firstOrCreate(
+        ['email' => 'maligaso.chesterlukea@gmail.com'],
+        [
+            'name' => 'Chester Luke Maligaso',
+            'password' => \Illuminate\Support\Facades\Hash::make('12345678'),
+        ]
+        ));
+
+        // Create 9 more users for variety
+        \App\Models\User::factory(9)->create()->each(fn($u) => $users->push($u));
 
         $realisticProtocols = [
             [
@@ -133,7 +143,7 @@ class DatabaseSeeder extends Seeder
             \App\Models\Review::factory(rand(1, 3))->create([
                 'protocol_id' => $protocol->id,
                 'user_id' => fn() => $users->random()->id,
-                'content' => fake()->randomElement([
+                'comment' => fake()->randomElement([
                     'A game changer for my daily energy levels.',
                     'Simple to follow and very effective.',
                     'I wish I had known about this years ago!',

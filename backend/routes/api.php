@@ -7,22 +7,27 @@ use App\Http\Controllers\Api\ThreadController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\VoteController;
+use App\Http\Controllers\Api\AuthController;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Auth Routes
+Route::post('register', [AuthController::class , 'register']);
+Route::post('login', [AuthController::class , 'login']);
 
-// Protocols
-Route::apiResource('protocols', ProtocolController::class);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('logout', [AuthController::class , 'logout']);
+    Route::get('me', [AuthController::class , 'me']);
 
-// Threads
-Route::apiResource('threads', ThreadController::class);
+    // Protected Engagement Routes
+    Route::post('threads', [ThreadController::class , 'store']);
+    Route::post('comments', [CommentController::class , 'store']);
+    Route::post('reviews', [ReviewController::class , 'store']);
+    Route::post('votes', [VoteController::class , 'store']);
+});
 
-// Comments
-Route::apiResource('comments', CommentController::class);
-
-// Reviews
-Route::apiResource('reviews', ReviewController::class);
-
-// Votes
-Route::post('votes', [VoteController::class , 'store']);
+// Public Read Routes
+Route::get('protocols', [ProtocolController::class , 'index']);
+Route::get('protocols/{protocol}', [ProtocolController::class , 'show']);
+Route::get('threads', [ThreadController::class , 'index']);
+Route::get('threads/{thread}', [ThreadController::class , 'show']);
+Route::get('comments', [CommentController::class , 'index']);
+Route::get('reviews', [ReviewController::class , 'index']);

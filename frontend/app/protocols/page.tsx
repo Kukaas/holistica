@@ -145,11 +145,11 @@ export default function ProtocolsBrowse() {
                                         <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
                                             <span className="flex items-center gap-2">
                                                 <MessageSquare className="h-3 w-3" />
-                                                {protocol.discussion_count}
+                                                {protocol.threads_count || 0}
                                             </span>
                                             <span className="flex items-center gap-2">
                                                 <Star className="h-3 w-3" />
-                                                {protocol.ups}
+                                                {protocol.reviews_count || 0}
                                             </span>
                                         </div>
                                         <div className="text-[10px] font-black pointer-events-none uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity">

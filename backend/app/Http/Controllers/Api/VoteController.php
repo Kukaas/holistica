@@ -22,23 +22,26 @@ class VoteController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
             'votable_id' => 'required|string',
             'votable_type' => 'required|string',
             'value' => 'required|in:1,-1',
         ]);
 
+        $userId = auth()->id();
+
         // Enforce one vote per user per item
-        $existingVote = Vote::where('user_id', $validated['user_id'])
+        $existingVote = Vote::where('user_id', $userId)
             ->where('votable_id', $validated['votable_id'])
             ->where('votable_type', $validated['votable_type'])
             ->first();
 
         if ($existingVote) {
+            // If different value, update. If same, maybe delete (unsure of desired toggle behavior, but user said "only once")
+            // For now, let's stick to the "already voted" message as per existing code
             return response()->json(['message' => 'You have already voted on this item.'], 422);
         }
 
-        $vote = Vote::create($validated);
+        $vote = Vote::create(array_merge($validated, ['user_id' => $userId]));
 
         // Update the target model's counters
         $model = $validated['votable_type']::find($validated['votable_id']);

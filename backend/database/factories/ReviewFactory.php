@@ -20,7 +20,7 @@ class ReviewFactory extends Factory
             'protocol_id' => \App\Models\Protocol::factory(),
             'user_id' => \App\Models\User::factory(),
             'rating' => $this->faker->numberBetween(1, 5),
-            'content' => $this->faker->sentence(),
+            'comment' => $this->faker->sentence(),
         ];
     }
 }

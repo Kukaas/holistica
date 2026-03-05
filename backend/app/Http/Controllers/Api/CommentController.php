@@ -13,7 +13,7 @@ class CommentController extends Controller
      */
     public function index()
     {
-        //
+    //
     }
 
     /**
@@ -21,7 +21,23 @@ class CommentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'thread_id' => 'required|exists:threads,id',
+            'content' => 'required|string|min:3',
+            'parent_id' => 'nullable|exists:comments,id'
+        ]);
+
+        $comment = Comment::create(array_merge($validated, [
+            'user_id' => auth()->id()
+        ]));
+
+        // Re-index the thread to reflect new comment count
+        $thread = \App\Models\Thread::find($validated['thread_id']);
+        if ($thread) {
+            app(\App\Services\TypesenseService::class)->indexThread($thread);
+        }
+
+        return response()->json($comment->load('user'), 201);
     }
 
     /**
@@ -29,7 +45,7 @@ class CommentController extends Controller
      */
     public function show(Comment $comment)
     {
-        //
+    //
     }
 
     /**
@@ -37,7 +53,7 @@ class CommentController extends Controller
      */
     public function update(Request $request, Comment $comment)
     {
-        //
+    //
     }
 
     /**
@@ -45,6 +61,6 @@ class CommentController extends Controller
      */
     public function destroy(Comment $comment)
     {
-        //
+    //
     }
 }

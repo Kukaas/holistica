@@ -5,6 +5,8 @@ import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 interface VotingProps {
     type: "protocol" | "thread" | "comment";
@@ -15,32 +17,40 @@ interface VotingProps {
 }
 
 export function Voting({ type, id, initialUps = 0, initialDowns = 0, userVote = null }: VotingProps) {
+    const { user } = useAuth();
     const [ups, setUps] = useState(initialUps);
     const [downs, setDowns] = useState(initialDowns);
     const [currentVote, setCurrentVote] = useState<number | null>(userVote);
     const [loading, setLoading] = useState(false);
 
     const handleVote = async (score: number) => {
+        if (!user) {
+            toast.error("Identity Required", {
+                description: "You must be logged in to engage with protocols.",
+            });
+            return;
+        }
+
         if (loading) return;
         setLoading(true);
 
         try {
-            const finalScore = currentVote === score ? 0 : score;
+            const nextValue = currentVote === score ? 0 : score;
 
             await api.post("/votes", {
-                votable_id: id,
+                votable_id: String(id),
                 votable_type: type === "protocol" ? "App\\Models\\Protocol" :
                     type === "thread" ? "App\\Models\\Thread" : "App\\Models\\Comment",
-                score: finalScore
+                value: nextValue
             });
 
-            if (currentVote === 1) setUps(prev => prev - 1);
-            if (currentVote === -1) setDowns(prev => prev - 1);
+            if (currentVote === 1) setUps(prev => Math.max(0, prev - 1));
+            if (currentVote === -1) setDowns(prev => Math.max(0, prev - 1));
 
-            if (finalScore === 1) setUps(prev => prev + 1);
-            if (finalScore === -1) setDowns(prev => prev + 1);
+            if (nextValue === 1) setUps(prev => prev + 1);
+            if (nextValue === -1) setDowns(prev => prev + 1);
 
-            setCurrentVote(finalScore === 0 ? null : finalScore);
+            setCurrentVote(nextValue === 0 ? null : nextValue);
         } catch (error) {
             console.error("Voting error:", error);
         } finally {

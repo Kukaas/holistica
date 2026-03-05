@@ -14,7 +14,7 @@ class Review extends Model
         'protocol_id',
         'user_id',
         'rating',
-        'content',
+        'comment',
     ];
 
     public function protocol()

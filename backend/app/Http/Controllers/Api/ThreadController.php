@@ -28,6 +28,37 @@ class ThreadController extends Controller
     }
 
     /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'protocol_id' => 'required|exists:protocols,id',
+            'title' => 'required|string|max:255',
+        ]);
+
+        // Mock current user ID for assessment purposes if not authenticated
+        $userId = auth()->id();
+
+        $thread = Thread::create([
+            'protocol_id' => $validated['protocol_id'],
+            'title' => $validated['title'],
+            'user_id' => $userId,
+            'status' => 'open',
+        ]);
+
+        // Update protocol's discussion_count
+        $protocol = $thread->protocol;
+        $protocol->discussion_count = $protocol->threads()->count() + $protocol->reviews()->count();
+        $protocol->save();
+
+        // Sync to Typesense
+        app(\App\Services\TypesenseService::class)->indexThread($thread);
+
+        return response()->json($thread->load('user'), 201);
+    }
+
+    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Thread $thread)

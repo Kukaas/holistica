@@ -10,25 +10,60 @@ import { motion } from "framer-motion";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Voting } from "@/components/Voting";
+import { cn } from "@/lib/utils";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 export default function ThreadDetail() {
     const { id } = useParams();
     const [thread, setThread] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [commentContent, setCommentContent] = useState("");
+    const [parentId, setParentId] = useState<string | null>(null);
+    const [showCommentDialog, setShowCommentDialog] = useState(false);
+
+    async function fetchThread() {
+        try {
+            const response = await api.get(`/threads/${id}`);
+            setThread(response.data);
+        } catch (error) {
+            console.error("Error fetching thread:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     useEffect(() => {
-        async function fetchThread() {
-            try {
-                const response = await api.get(`/threads/${id}`);
-                setThread(response.data);
-            } catch (error) {
-                console.error("Error fetching thread:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
         fetchThread();
     }, [id]);
+
+    const handleCreateComment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            await api.post("/comments", {
+                thread_id: id,
+                parent_id: parentId,
+                content: commentContent,
+            });
+            setCommentContent("");
+            setParentId(null);
+            setShowCommentDialog(false);
+            fetchThread();
+        } catch (error) {
+            console.error("Error creating comment:", error);
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -43,39 +78,49 @@ export default function ThreadDetail() {
     if (!thread) return <div className="container py-24 text-center">Thread not found.</div>;
 
     // Simple comment nesting helper
-    const renderComments = (comments: any[], parentId: any = null, depth = 0) => {
+    const renderComments = (comments: any[], pId: any = null, depth = 0) => {
         return comments
-            .filter((c) => (parentId === null ? !c.parent_id : c.parent_id === parentId))
+            .filter((c) => (pId === null ? !c.parent_id : c.parent_id === pId))
             .map((comment) => (
-                <div key={comment.id} className={`space-y-6 ${depth > 0 ? "ml-8 border-l-2 border-muted pl-10" : "border-b border-muted/20 pb-12"}`}>
-                    <div className="flex gap-6">
-                        <Avatar className="h-10 w-10 border-2 border-muted rounded-none">
-                            <AvatarFallback className="text-[10px] font-black rounded-none">
-                                {comment.user?.name?.slice(0, 2).toUpperCase() || "UN"}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 space-y-3">
-                            <div className="flex items-center gap-4">
-                                <span className="text-sm font-black uppercase tracking-widest text-foreground">{comment.user?.name || "Anonymous"}</span>
-                                <span className="text-[10px] font-bold text-muted-foreground/50">
-                                    {new Date(comment.created_at).toLocaleDateString()}
-                                </span>
-                            </div>
-                            <p className="text-[15px] font-medium text-foreground/80 leading-relaxed max-w-2xl">{comment.content}</p>
-                            <div className="flex items-center gap-6 pt-2">
-                                <div className="flex items-center py-1 px-4 border-2 border-muted hover:border-foreground transition-all">
-                                    <Voting
-                                        type="comment"
-                                        id={comment.id}
-                                        initialUps={comment.ups || 0}
-                                        initialDowns={comment.downs || 0}
-                                    />
+                <div key={comment.id} className="space-y-6">
+                    <div className={cn("space-y-6", depth > 0 ? "ml-8 border-l-2 border-muted pl-10" : "border-b border-muted/20 pb-12 pt-6")}>
+                        <div className="flex gap-6">
+                            <Avatar className="h-10 w-10 border-2 border-muted rounded-none">
+                                <AvatarFallback className="text-[10px] font-black rounded-none">
+                                    {comment.user?.name?.slice(0, 2).toUpperCase() || "UN"}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 space-y-3">
+                                <div className="flex items-center gap-4">
+                                    <span className="text-sm font-black uppercase tracking-widest text-foreground">{comment.user?.name || "Anonymous"}</span>
+                                    <span className="text-[10px] font-bold text-muted-foreground/50">
+                                        {new Date(comment.created_at).toLocaleDateString()}
+                                    </span>
                                 </div>
-                                <button className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors">Reply</button>
+                                <p className="text-[15px] font-medium text-foreground/80 leading-relaxed max-w-2xl">{comment.content}</p>
+                                <div className="flex items-center gap-6 pt-2">
+                                    <div className="flex items-center py-1 px-4 border-2 border-muted hover:border-foreground transition-all">
+                                        <Voting
+                                            type="comment"
+                                            id={comment.id}
+                                            initialUps={comment.ups || 0}
+                                            initialDowns={comment.downs || 0}
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            setParentId(comment.id);
+                                            setShowCommentDialog(true);
+                                        }}
+                                        className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors"
+                                    >
+                                        Reply
+                                    </button>
+                                </div>
                             </div>
                         </div>
+                        {renderComments(comments, comment.id, depth + 1)}
                     </div>
-                    {renderComments(comments, comment.id, depth + 1)}
                 </div>
             ));
     };
@@ -130,10 +175,42 @@ export default function ThreadDetail() {
                             Comments ({thread.comments?.length || 0})
                         </h2>
                     </div>
-                    <Button size="sm" className="rounded-none border-2 h-14 px-10 font-black uppercase tracking-widest text-[11px] bg-foreground text-background hover:bg-foreground/90 transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)]">
+                    <Button
+                        onClick={() => {
+                            setParentId(null);
+                            setShowCommentDialog(true);
+                        }}
+                        size="sm"
+                        className="rounded-none border-2 h-14 px-10 font-black uppercase tracking-widest text-[11px] bg-foreground text-background hover:bg-foreground/90 transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)]"
+                    >
                         Add Comment
                     </Button>
                 </div>
+
+                <Dialog open={showCommentDialog} onOpenChange={setShowCommentDialog}>
+                    <DialogContent className="rounded-none border-4 border-foreground">
+                        <DialogHeader>
+                            <DialogTitle className="font-black uppercase tracking-widest">
+                                {parentId ? "Post Reply" : "Join Dialogue"}
+                            </DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleCreateComment} className="space-y-6 pt-4">
+                            <div className="space-y-2">
+                                <Label className="font-black uppercase text-[10px]">Your Message</Label>
+                                <Textarea
+                                    value={commentContent}
+                                    onChange={(e) => setCommentContent(e.target.value)}
+                                    placeholder="Add to the conversation..."
+                                    className="rounded-none border-2 min-h-[120px]"
+                                    required
+                                />
+                            </div>
+                            <Button type="submit" disabled={submitting} className="w-full rounded-none h-14 font-black uppercase tracking-widest bg-foreground text-background">
+                                {submitting ? "Sending..." : "Post Comment"}
+                            </Button>
+                        </form>
+                    </DialogContent>
+                </Dialog>
 
                 <div className="space-y-16">
                     {thread.comments?.length > 0 ? (

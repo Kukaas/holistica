@@ -23,12 +23,13 @@ class ReviewController extends Controller
     {
         $validated = $request->validate([
             'protocol_id' => 'required|exists:protocols,id',
-            'user_id' => 'required|exists:users,id',
             'rating' => 'required|numeric|min:1|max:5',
-            'comment' => 'nullable|string'
+            'comment' => 'required|string|min:3'
         ]);
 
-        $review = Review::create($validated);
+        $review = Review::create(array_merge($validated, [
+            'user_id' => auth()->id()
+        ]));
 
         // Update protocol's avg_rating and review count
         $protocol = $review->protocol;

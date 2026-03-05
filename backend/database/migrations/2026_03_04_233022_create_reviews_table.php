@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignUuid('protocol_id')->constrained('protocols')->onDelete('cascade');
             $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
             $table->integer('rating');
-            $table->text('content')->nullable();
+            $table->text('comment')->nullable();
             $table->timestamps();
         });
     }

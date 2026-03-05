@@ -10,25 +10,97 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Separator } from "@/components/ui/separator";
 import { Voting } from "@/components/Voting";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 export default function ProtocolDetail() {
+    const { user } = useAuth();
     const { id } = useParams();
     const [protocol, setProtocol] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+
+    // Form States
+    const [threadTitle, setThreadTitle] = useState("");
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewComment, setReviewComment] = useState("");
+    const [showThreadDialog, setShowThreadDialog] = useState(false);
+    const [showReviewDialog, setShowReviewDialog] = useState(false);
+
+    async function fetchProtocol() {
+        try {
+            const response = await api.get(`/protocols/${id}`);
+            setProtocol(response.data);
+        } catch (error) {
+            console.error("Error fetching protocol:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     useEffect(() => {
-        async function fetchProtocol() {
-            try {
-                const response = await api.get(`/protocols/${id}`);
-                setProtocol(response.data);
-            } catch (error) {
-                console.error("Error fetching protocol:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
         fetchProtocol();
     }, [id]);
+
+    const handleCreateThread = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user) {
+            toast.error("Identity Required", {
+                description: "Log in to start new discussions.",
+            });
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await api.post("/threads", {
+                protocol_id: id,
+                title: threadTitle,
+            });
+            setThreadTitle("");
+            setShowThreadDialog(false);
+            fetchProtocol(); // Refresh data
+        } catch (error) {
+            console.error("Error creating thread:", error);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleCreateReview = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user) {
+            toast.error("Identity Required", {
+                description: "Log in to submit protocol assessments.",
+            });
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await api.post("/reviews", {
+                protocol_id: id,
+                rating: reviewRating,
+                comment: reviewComment,
+            });
+            setReviewComment("");
+            setShowReviewDialog(false);
+            fetchProtocol(); // Refresh data
+        } catch (error) {
+            console.error("Error creating review:", error);
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -85,7 +157,11 @@ export default function ProtocolDetail() {
                     </div>
                     <div className="flex items-center gap-2">
                         <MessageSquare className="h-4 w-4" />
-                        <span>{protocol.discussion_count} discussions</span>
+                        <span>{protocol.threads_count || 0} discussions</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4" />
+                        <span>{protocol.reviews_count || 0} reviews</span>
                     </div>
                     <div className="flex items-center py-2 h-10 px-6 border-2 border-muted hover:border-foreground transition-all">
                         <Voting
@@ -120,9 +196,89 @@ export default function ProtocolDetail() {
                         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Engagement</span>
                         <h2 className="text-3xl font-black tracking-tight">Discussions</h2>
                     </div>
-                    <Button variant="outline" size="sm" className="rounded-none border-2 h-12 px-8 font-black uppercase tracking-widest text-[10px]">
-                        Start a thread
-                    </Button>
+                    <div className="flex items-center gap-4">
+                        <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="rounded-none border-2 h-12 px-8 font-black uppercase tracking-widest text-[10px]">
+                                    Rate Protocol
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="rounded-none border-4 border-foreground">
+                                <DialogHeader>
+                                    <DialogTitle className="font-black uppercase tracking-widest">Protocol Assessment</DialogTitle>
+                                </DialogHeader>
+                                <form onSubmit={handleCreateReview} className="space-y-6 pt-4">
+                                    <div className="space-y-4">
+                                        <Label className="font-black uppercase text-[10px]">Protocol Grade</Label>
+                                        <div className="flex gap-2">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                    key={star}
+                                                    type="button"
+                                                    onClick={() => setReviewRating(star)}
+                                                    className="group transition-all active:scale-90"
+                                                >
+                                                    <Star
+                                                        className={cn(
+                                                            "h-10 w-10 transition-colors",
+                                                            star <= reviewRating
+                                                                ? "fill-foreground text-foreground"
+                                                                : "text-muted hover:text-foreground/40"
+                                                        )}
+                                                    />
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                            Selecting {reviewRating} out of 5 stars
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="font-black uppercase text-[10px]">Feedback (Required)</Label>
+                                        <Textarea
+                                            value={reviewComment}
+                                            onChange={(e) => setReviewComment(e.target.value)}
+                                            placeholder="Your experience..."
+                                            className="rounded-none border-2 min-h-[100px]"
+                                            required
+                                            minLength={3}
+                                        />
+                                    </div>
+                                    <Button type="submit" disabled={submitting} className="w-full rounded-none h-14 font-black uppercase tracking-widest bg-foreground text-background">
+                                        {submitting ? "Processing..." : "Submit Review"}
+                                    </Button>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+
+                        <Dialog open={showThreadDialog} onOpenChange={setShowThreadDialog}>
+                            <DialogTrigger asChild>
+                                <Button size="sm" className="rounded-none border-2 h-12 px-8 font-black uppercase tracking-widest text-[10px] bg-foreground text-background hover:bg-foreground/90">
+                                    Start a thread
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="rounded-none border-4 border-foreground">
+                                <DialogHeader>
+                                    <DialogTitle className="font-black uppercase tracking-widest">Open Discussion</DialogTitle>
+                                </DialogHeader>
+                                <form onSubmit={handleCreateThread} className="space-y-6 pt-4">
+                                    <div className="space-y-2">
+                                        <Label className="font-black uppercase text-[10px]">Topic</Label>
+                                        <Input
+                                            value={threadTitle}
+                                            onChange={(e) => setThreadTitle(e.target.value)}
+                                            placeholder="What would you like to discuss?"
+                                            className="rounded-none border-2 h-12 font-bold"
+                                            required
+                                        />
+                                    </div>
+                                    <Button type="submit" disabled={submitting} className="w-full rounded-none h-14 font-black uppercase tracking-widest bg-foreground text-background">
+                                        {submitting ? "Starting..." : "Create Thread"}
+                                    </Button>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </div>
 
                 {protocol.threads?.length > 0 ? (
@@ -138,7 +294,7 @@ export default function ProtocolDetail() {
                                         </span>
                                         <span className="flex items-center gap-2">
                                             <Clock className="h-3.5 w-3.5" />
-                                            Active yesterday
+                                            {new Date(thread.created_at).toLocaleDateString()}
                                         </span>
                                     </div>
                                 </div>
@@ -148,6 +304,53 @@ export default function ProtocolDetail() {
                 ) : (
                     <div className="py-24 text-center border-4 border-dashed rounded-[3rem] border-muted/20">
                         <p className="text-sm font-black text-muted-foreground/20 uppercase tracking-[0.4em]">No dialogue found</p>
+                    </div>
+                )}
+            </section>
+
+            {/* Reviews Section */}
+            <section className="space-y-12">
+                <div className="flex items-center justify-between border-b pb-8">
+                    <div className="space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Assessment</span>
+                        <h2 className="text-3xl font-black tracking-tight">Community Feedback</h2>
+                    </div>
+                </div>
+
+                {protocol.reviews?.length > 0 ? (
+                    <div className="grid gap-10">
+                        {protocol.reviews.map((review: any) => (
+                            <div key={review.id} className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex gap-0.5">
+                                            {[1, 2, 3, 4, 5].map((s) => (
+                                                <Star
+                                                    key={s}
+                                                    className={cn(
+                                                        "h-3.5 w-3.5",
+                                                        s <= review.rating ? "fill-foreground text-foreground" : "text-muted"
+                                                    )}
+                                                />
+                                            ))}
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground">
+                                            {review.user?.name || "Anonymous"}
+                                        </span>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">
+                                        {new Date(review.created_at).toLocaleDateString()}
+                                    </span>
+                                </div>
+                                <p className="text-[15px] font-medium text-foreground/70 leading-relaxed italic border-l-2 border-muted pl-6">
+                                    "{review.comment}"
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="py-24 text-center border-4 border-dashed rounded-[3rem] border-muted/20">
+                        <p className="text-sm font-black text-muted-foreground/20 uppercase tracking-[0.4em]">No assessments recorded</p>
                     </div>
                 )}
             </section>

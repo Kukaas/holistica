@@ -45,6 +45,7 @@ class ProtocolController extends Controller
                     $quotedIds = $ids->map(fn($id) => "'$id'")->implode(',');
 
                     return Protocol::with('author')
+                        ->withCount(['threads', 'reviews'])
                         ->whereIn('id', $ids)
                         ->orderByRaw("FIELD(id, $quotedIds)")
                         ->paginate(10);
@@ -58,6 +59,7 @@ class ProtocolController extends Controller
                 \Log::error('Typesense Search Fail: ' . $e->getMessage());
 
                 $query = Protocol::query()->with('author')
+                    ->withCount(['threads', 'reviews'])
                     ->where(function (Builder $q) use ($request) {
                     $q->where('title', 'LIKE', "%{$request->search}%")
                         ->orWhere('tags', 'LIKE', "%{$request->search}%");
@@ -68,7 +70,7 @@ class ProtocolController extends Controller
         }
 
         // 2. Default SQL Logic (Fallback or browse mode)
-        $query = Protocol::query()->with('author');
+        $query = Protocol::query()->with('author')->withCount(['threads', 'reviews']);
         $query = $this->applySorting($query, $request->get('sort'));
 
         return $query->paginate(10);
@@ -94,7 +96,7 @@ class ProtocolController extends Controller
 
     public function show(Protocol $protocol)
     {
-        return $protocol->load(['author', 'threads.user', 'reviews.user']);
+        return $protocol->loadCount(['threads', 'reviews'])->load(['author', 'threads.user', 'reviews.user']);
     }
 
     /**
