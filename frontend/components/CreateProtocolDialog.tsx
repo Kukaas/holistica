@@ -21,17 +21,23 @@ import { toast } from "sonner";
 interface CreateProtocolDialogProps {
     onSuccess?: () => void;
     trigger?: React.ReactNode;
+    protocol?: {
+        id: string;
+        title: string;
+        content: string;
+        tags: string[];
+    };
 }
 
-export function CreateProtocolDialog({ onSuccess, trigger }: CreateProtocolDialogProps) {
+export function CreateProtocolDialog({ onSuccess, trigger, protocol }: CreateProtocolDialogProps) {
     const { user } = useAuth();
     const router = useRouter();
 
     const [open, setOpen] = useState(false);
-    const [title, setTitle] = useState("");
-    const [content, setContent] = useState("");
+    const [title, setTitle] = useState(protocol?.title || "");
+    const [content, setContent] = useState(protocol?.content || "");
     const [tagInput, setTagInput] = useState("");
-    const [tags, setTags] = useState<string[]>([]);
+    const [tags, setTags] = useState<string[]>(protocol?.tags || []);
     const [loading, setLoading] = useState(false);
 
     const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -68,26 +74,44 @@ export function CreateProtocolDialog({ onSuccess, trigger }: CreateProtocolDialo
 
         setLoading(true);
         try {
-            const response = await api.post("/protocols", {
-                title,
-                content,
-                tags
-            });
-            toast.success("Protocol Published", {
-                description: "Your protocol is now live in the registry.",
-            });
-            setTitle("");
-            setContent("");
-            setTags([]);
+            let response;
+            if (protocol) {
+                // Update mode
+                response = await api.put(`/protocols/${protocol.id}`, {
+                    title,
+                    content,
+                    tags
+                });
+                toast.success("Protocol Updated", {
+                    description: "Your changes have been saved.",
+                });
+            } else {
+                // Create mode
+                response = await api.post("/protocols", {
+                    title,
+                    content,
+                    tags
+                });
+                toast.success("Protocol Published", {
+                    description: "Your protocol is now live in the registry.",
+                });
+            }
+
+            if (!protocol) {
+                setTitle("");
+                setContent("");
+                setTags([]);
+            }
+
             setOpen(false);
             if (onSuccess) {
                 onSuccess();
-            } else {
+            } else if (!protocol) {
                 router.push(`/protocols/${response.data.id}`);
             }
         } catch (error: any) {
-            toast.error("Submission Failed", {
-                description: error.response?.data?.message || "Failed to create protocol",
+            toast.error(protocol ? "Update Failed" : "Submission Failed", {
+                description: error.response?.data?.message || "Something went wrong",
             });
             console.error(error);
         } finally {
@@ -107,10 +131,10 @@ export function CreateProtocolDialog({ onSuccess, trigger }: CreateProtocolDialo
             <DialogContent className="max-w-2xl rounded-none border-4 border-foreground max-h-[90vh] overflow-y-auto">
                 <DialogHeader className="mb-6">
                     <DialogTitle className="text-3xl font-black uppercase tracking-tight">
-                        Publish Protocol
+                        {protocol ? "Edit Protocol" : "Publish Protocol"}
                     </DialogTitle>
                     <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest pt-2">
-                        Share your wellness routine with the community
+                        {protocol ? "Update your shared wellness routine" : "Share your wellness routine with the community"}
                     </p>
                 </DialogHeader>
 
@@ -181,8 +205,8 @@ export function CreateProtocolDialog({ onSuccess, trigger }: CreateProtocolDialo
                             disabled={loading || !user}
                             className="w-full h-14 rounded-none font-black uppercase tracking-widest bg-foreground text-background hover:bg-foreground/90 transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)] active:shadow-none active:translate-x-1 active:translate-y-1"
                         >
-                            {loading ? "Publishing..." : user ? "Publish Protocol" : "Authentication Required"}
-                            {user && !loading && <Plus className="ml-2 h-4 w-4" />}
+                            {loading ? (protocol ? "Updating..." : "Publishing...") : (user ? (protocol ? "Save Changes" : "Publish Protocol") : "Authentication Required")}
+                            {user && !loading && !protocol && <Plus className="ml-2 h-4 w-4" />}
                         </Button>
                     </div>
                 </form>

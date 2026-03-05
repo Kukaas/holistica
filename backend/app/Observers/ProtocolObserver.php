@@ -35,7 +35,7 @@ class ProtocolObserver
      */
     public function restored(Protocol $protocol): void
     {
-    //
+        app(\App\Services\TypesenseService::class)->indexProtocol($protocol);
     }
 
     /**

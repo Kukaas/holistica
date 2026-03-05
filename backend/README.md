@@ -52,12 +52,14 @@ Run the database migrations and populate the database with dummy data (protocols
 php artisan migrate --seed
 ```
 
-### 4. Indexing Data in Typesense
-After seeding or migrating data, you must sync the data into Typesense manually:
+### 4. Full Reset & Quick Setup
+For a complete reset of the database and search index, run this unified command:
 ```bash
-php artisan typesense:reindex
+php artisan migrate:fresh --seed; php artisan typesense:reindex
 ```
-> **Note:** Any creating, updating, or deleting of models via the App will automatically be synced to Typesense via Eloquent lifecycle model observers.
+> **Note:** Use `&&` instead of `;` if you are using CMD or Bash. This will wipe your database, re-seed demo data, and sync everything to Typesense.
+
+> **Automatic Sync:** During normal operation, any creating, updating, or deleting of models will automatically be synced to Typesense via Eloquent observers.
 
 ### 5. Running the Application
 Start the local development server:

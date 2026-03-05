@@ -83,11 +83,11 @@ class ProtocolController extends Controller
             }
             catch (\Exception $e) {
                 // Fallback to SQL search if Typesense fails or is unavailable
-                \Log::error('Typesense Search Fail: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error('Typesense Search Fail: ' . $e->getMessage());
 
                 $query = Protocol::query()->with('author')
                     ->withCount(['threads', 'reviews'])
-                    ->where(function (Builder $q) use ($request) {
+                    ->where(function ($q) use ($request) {
                     $q->where('title', 'LIKE', "%{$request->search}%")
                         ->orWhere('tags', 'LIKE', "%{$request->search}%");
                 });
@@ -123,7 +123,7 @@ class ProtocolController extends Controller
 
     public function show(Protocol $protocol)
     {
-        return $protocol->loadCount(['threads', 'reviews'])->load(['author']);
+        return $protocol->loadCount(['threads', 'reviews'])->load('author');
     }
 
     public function threads(Protocol $protocol)
@@ -141,14 +141,79 @@ class ProtocolController extends Controller
      */
     public function update(Request $request, Protocol $protocol)
     {
-    //
+        if ($request->user()->id !== $protocol->author_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string'
+        ]);
+
+        $protocol->update($validated);
+
+        return response()->json($protocol);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Protocol $protocol)
+    public function destroy(Request $request, Protocol $protocol)
     {
-    //
+        if ($request->user()->id !== $protocol->author_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Cascade soft delete: Threads -> Comments -> Votes
+        $protocol->threads()->each(function ($thread) {
+            $thread->comments()->each(function ($comment) {
+                    $comment->votes()->delete();
+                    $comment->delete();
+                }
+                );
+                $thread->delete();
+            });
+
+        $protocol->reviews()->each(function ($review) {
+            $review->votes()->delete();
+            $review->delete();
+        });
+
+        $protocol->delete();
+
+        return response()->json(['message' => 'Protocol deleted. You can undo this action within 10 seconds.']);
+    }
+
+    /**
+     * Restore the specified resource.
+     */
+    public function restore(Request $request, $id)
+    {
+        $protocol = Protocol::onlyTrashed()->findOrFail($id);
+
+        if ($request->user()->id !== $protocol->author_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $protocol->restore();
+
+        // Restore descendants
+        $protocol->threads()->onlyTrashed()->each(function ($thread) {
+            $thread->comments()->onlyTrashed()->each(function ($comment) {
+                    $comment->votes()->onlyTrashed()->restore();
+                    $comment->restore();
+                }
+                );
+                $thread->restore();
+            });
+
+        $protocol->reviews()->onlyTrashed()->each(function ($review) {
+            $review->votes()->onlyTrashed()->restore();
+            $review->restore();
+        });
+
+        return response()->json(['message' => 'Protocol restored successully.']);
     }
 }

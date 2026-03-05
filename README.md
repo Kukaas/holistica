@@ -35,11 +35,13 @@ The project is built as a monolith repository containing both the frontend and b
    php artisan key:generate
    ```
 5. Configure your `.env` file credentials (see **Environment Configuration** section below).
-6. Run database migrations and seeders:
+6. Run database migrations, seed demo data, and reindex search in one command:
    ```bash
-   php artisan migrate --seed
+   php artisan migrate:fresh --seed; php artisan typesense:reindex
    ```
-   *Note: This will seed demo data, including the following test users:*
+   *(Note: Use `migrate:fresh` to wipe the database and start clean, or simply `migrate --seed` if you just want to add missing tables. Semicolon works in PowerShell; use `&&` for CMD or Bash.)*
+
+   *Included test users:*
    - **Email:** `maligaso.chesterlukea@gmail.com` | **Password:** `12345678`
    - **Email:** `jhondoe@example.com` | **Password:** `12345678`
 7. Start the local development server:

@@ -49,4 +49,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function protocols()
+    {
+        return $this->hasMany(Protocol::class , 'author_id');
+    }
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import api from "@/lib/api";
+import { CreateProtocolDialog } from "@/components/CreateProtocolDialog";
 import { Badge } from "@/components/ui/badge";
 import { Star, MessageSquare, ArrowLeft, Clock, User, Share2 } from "lucide-react";
 import Link from "next/link";
@@ -28,6 +29,7 @@ import { ThreadItemSkeleton, ReviewItemSkeleton } from "@/components/ItemSkeleto
 export default function ProtocolDetail() {
     const { user } = useAuth();
     const { id } = useParams();
+    const router = useRouter();
     const [protocol, setProtocol] = useState<any>(null);
     const [threadsData, setThreadsData] = useState<any>(null);
     const [reviewsData, setReviewsData] = useState<any>(null);
@@ -44,6 +46,7 @@ export default function ProtocolDetail() {
     const [reviewComment, setReviewComment] = useState("");
     const [showThreadDialog, setShowThreadDialog] = useState(false);
     const [showReviewDialog, setShowReviewDialog] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     async function fetchProtocol() {
         try {
@@ -139,6 +142,60 @@ export default function ProtocolDetail() {
         }
     };
 
+    const handleDelete = async () => {
+        if (!window.confirm("Trash Protocol? This will move the protocol and all its discussions to the trash. You can undo this for 10 seconds.")) {
+            return;
+        }
+
+        setIsDeleting(true);
+        try {
+            await api.delete(`/protocols/${id}`);
+
+            let timeLeft = 10;
+            const toastId = toast.success("Protocol trashed", {
+                description: `Recoverable for ${timeLeft} seconds.`,
+                action: {
+                    label: "Undo",
+                    onClick: () => handleRestore(),
+                },
+                duration: 10000,
+            });
+
+            const timer = setInterval(() => {
+                timeLeft -= 1;
+                if (timeLeft > 0) {
+                    toast.success("Protocol trashed", {
+                        id: toastId,
+                        description: `Recoverable for ${timeLeft} seconds.`,
+                        action: {
+                            label: "Undo",
+                            onClick: () => handleRestore(),
+                        },
+                    });
+                } else {
+                    clearInterval(timer);
+                    toast.dismiss(toastId);
+                }
+            }, 1000);
+
+            router.push("/protocols");
+        } catch (error) {
+            toast.error("Operation failed");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const handleRestore = async () => {
+        try {
+            await api.post(`/protocols/${id}/restore`);
+            toast.success("Protocol restored");
+            fetchProtocol();
+        } catch (error) {
+            toast.error("Restoration failed");
+        }
+    };
+
     if (loading) {
         return (
             <div className="container py-12 animate-pulse">
@@ -153,14 +210,41 @@ export default function ProtocolDetail() {
         return <div className="container py-24 text-center">Protocol not found.</div>;
     }
 
+    const isAuthor = user?.id === protocol.author_id;
+
     return (
         <div className="container max-w-4xl py-8 md:py-12">
-            <Link
-                href="/"
-                className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground mb-16 transition-colors w-fit"
-            >
-                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back to registry
-            </Link>
+            <div className="flex items-center justify-between mb-16">
+                <Link
+                    href="/protocols"
+                    className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors w-fit"
+                >
+                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back to registry
+                </Link>
+
+                {isAuthor && (
+                    <div className="flex items-center gap-4">
+                        <CreateProtocolDialog
+                            protocol={protocol}
+                            onSuccess={fetchProtocol}
+                            trigger={
+                                <Button variant="outline" size="sm" className="rounded-none h-10 px-6 font-black uppercase tracking-widest text-[9px] border-2">
+                                    Edit
+                                </Button>
+                            }
+                        />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="rounded-none h-10 px-6 font-black uppercase tracking-widest text-[9px] border-2 hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-all"
+                        >
+                            {isDeleting ? "Trashing..." : "Delete"}
+                        </Button>
+                    </div>
+                )}
+            </div>
 
             <motion.header
                 initial={{ opacity: 0, y: 10 }}
