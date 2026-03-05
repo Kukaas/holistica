@@ -19,7 +19,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Protected Engagement Routes
     Route::post('threads', [ThreadController::class , 'store']);
+    Route::put('threads/{thread}', [ThreadController::class , 'update']);
+    Route::delete('threads/{thread}', [ThreadController::class , 'destroy']);
     Route::post('comments', [CommentController::class , 'store']);
+    Route::put('comments/{comment}', [CommentController::class , 'update']);
+    Route::delete('comments/{comment}', [CommentController::class , 'destroy']);
     Route::post('reviews', [ReviewController::class , 'store']);
     Route::post('votes', [VoteController::class , 'store']);
 });

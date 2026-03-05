@@ -48,12 +48,24 @@ class CommentController extends Controller
     //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Comment $comment)
     {
-    //
+        if (auth()->id() !== $comment->user_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'content' => 'required|string|min:3',
+        ]);
+
+        $comment->update($validated);
+
+        $thread = \App\Models\Thread::find($comment->thread_id);
+        if ($thread) {
+            app(\App\Services\TypesenseService::class)->indexThread($thread);
+        }
+
+        return response()->json($comment->load('user'));
     }
 
     /**
@@ -61,6 +73,18 @@ class CommentController extends Controller
      */
     public function destroy(Comment $comment)
     {
-    //
+        if (auth()->id() !== $comment->user_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $threadId = $comment->thread_id;
+        $comment->delete();
+
+        $thread = \App\Models\Thread::find($threadId);
+        if ($thread) {
+            app(\App\Services\TypesenseService::class)->indexThread($thread);
+        }
+
+        return response()->json(['message' => 'Comment deleted']);
     }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, ArrowLeft, User, Clock } from "lucide-react";
@@ -20,9 +20,15 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { CommentItem } from "@/components/CommentItem";
+import { useAuth } from "@/context/AuthContext";
+import { Edit, Trash } from "lucide-react";
 
 export default function ThreadDetail() {
     const { id } = useParams();
+    const router = useRouter();
+    const { user } = useAuth();
     const [thread, setThread] = useState<any>(null);
     const [commentsData, setCommentsData] = useState<any>(null);
     const [commentsPage, setCommentsPage] = useState(1);
@@ -32,10 +38,15 @@ export default function ThreadDetail() {
     const [parentId, setParentId] = useState<string | null>(null);
     const [showCommentDialog, setShowCommentDialog] = useState(false);
 
+    const [isEditingThread, setIsEditingThread] = useState(false);
+    const [editThreadTitle, setEditThreadTitle] = useState("");
+    const [submittingThread, setSubmittingThread] = useState(false);
+
     async function fetchThread() {
         try {
             const response = await api.get(`/threads/${id}`);
             setThread(response.data);
+            setEditThreadTitle(response.data.title);
             fetchComments(1);
         } catch (error) {
             console.error("Error fetching thread:", error);
@@ -79,6 +90,30 @@ export default function ThreadDetail() {
         }
     };
 
+    const handleThreadEdit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmittingThread(true);
+        try {
+            await api.put(`/threads/${id}`, { title: editThreadTitle });
+            setIsEditingThread(false);
+            fetchThread();
+        } catch (error) {
+            console.error("Error updating thread:", error);
+        } finally {
+            setSubmittingThread(false);
+        }
+    };
+
+    const handleThreadDelete = async () => {
+        if (!confirm("Are you sure you want to delete this discussion?")) return;
+        try {
+            await api.delete(`/threads/${id}`);
+            router.push("/discussions");
+        } catch (error) {
+            console.error("Error deleting thread:", error);
+        }
+    };
+
     if (loading) {
         return (
             <div className="container py-24 animate-pulse">
@@ -91,80 +126,7 @@ export default function ThreadDetail() {
 
     if (!thread) return <div className="container py-24 text-center">Thread not found.</div>;
 
-    // Nested Comment Item Component for handle expansion
-    const CommentItem = ({ comment, allComments, depth = 0 }: { comment: any, allComments: any[], depth: number }) => {
-        const [isExpanded, setIsExpanded] = useState(false);
-        const replies = allComments.filter((c) => c.parent_id === comment.id);
-        const hasReplies = replies.length > 0;
-
-        return (
-            <div className="space-y-6">
-                <div className={cn("space-y-6", depth > 0 ? "ml-8 border-l-2 border-muted pl-10" : "border-b border-muted/20 pb-12 pt-6")}>
-                    <div className="flex gap-6">
-                        <Avatar className="h-10 w-10 border-2 border-muted rounded-none">
-                            <AvatarFallback className="text-[10px] font-black rounded-none">
-                                {comment.user?.name?.slice(0, 2).toUpperCase() || "UN"}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 space-y-3">
-                            <div className="flex items-center gap-4">
-                                <span className="text-sm font-black uppercase tracking-widest text-foreground">{comment.user?.name || "Anonymous"}</span>
-                                <span className="text-[10px] font-bold text-muted-foreground/50">
-                                    {new Date(comment.created_at).toLocaleDateString()}
-                                </span>
-                            </div>
-                            <p className="text-[15px] font-medium text-foreground/80 leading-relaxed max-w-2xl">{comment.content}</p>
-                            <div className="flex items-center gap-6 pt-2">
-                                <div className="flex items-center py-1 px-4 border-2 border-muted hover:border-foreground transition-all">
-                                    <Voting
-                                        type="comment"
-                                        id={comment.id}
-                                        initialUps={comment.ups || 0}
-                                        initialDowns={comment.downs || 0}
-                                    />
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        setParentId(comment.id);
-                                        setShowCommentDialog(true);
-                                    }}
-                                    className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                    Reply
-                                </button>
-                                {hasReplies && (
-                                    <button
-                                        onClick={() => setIsExpanded(!isExpanded)}
-                                        className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground hover:opacity-70 transition-opacity flex items-center gap-2"
-                                    >
-                                        {isExpanded ? "Hide" : "Show"} Replies ({replies.length})
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {isExpanded && hasReplies && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="overflow-hidden"
-                        >
-                            {replies.map((reply) => (
-                                <CommentItem
-                                    key={reply.id}
-                                    comment={reply}
-                                    allComments={allComments}
-                                    depth={depth + 1}
-                                />
-                            ))}
-                        </motion.div>
-                    )}
-                </div>
-            </div>
-        );
-    };
+    const isThreadOwner = user?.id === thread.user_id;
 
     return (
         <div className="container max-w-4xl py-24 md:py-32">
@@ -180,7 +142,19 @@ export default function ThreadDetail() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-8 mb-20 border-l-4 border-foreground pl-10"
             >
-                <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[0.9] text-foreground">{thread.title}</h1>
+                <div className="flex items-start justify-between gap-8">
+                    <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[0.9] text-foreground flex-1">{thread.title}</h1>
+                    {isThreadOwner && (
+                        <div className="flex gap-4">
+                            <Button variant="outline" size="sm" onClick={() => setIsEditingThread(true)} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px]">
+                                <Edit className="w-3 h-3 mr-2" /> Edit
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={handleThreadDelete} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px] text-red-500 hover:text-red-700 hover:bg-red-500/10 border-red-500/20">
+                                <Trash className="w-3 h-3 mr-2" /> Delete
+                            </Button>
+                        </div>
+                    )}
+                </div>
                 <div className="flex flex-wrap items-center gap-10 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
                     <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 border-2 border-foreground rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
@@ -253,6 +227,30 @@ export default function ThreadDetail() {
                     </DialogContent>
                 </Dialog>
 
+                <Dialog open={isEditingThread} onOpenChange={setIsEditingThread}>
+                    <DialogContent className="rounded-none border-4 border-foreground">
+                        <DialogHeader>
+                            <DialogTitle className="font-black uppercase tracking-widest">
+                                Edit Discussion Title
+                            </DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleThreadEdit} className="space-y-6 pt-4">
+                            <div className="space-y-2">
+                                <Label className="font-black uppercase text-[10px]">Title</Label>
+                                <Input
+                                    value={editThreadTitle}
+                                    onChange={(e) => setEditThreadTitle(e.target.value)}
+                                    className="rounded-none border-2 h-14 font-bold"
+                                    required
+                                />
+                            </div>
+                            <Button type="submit" disabled={submittingThread} className="w-full rounded-none h-14 font-black uppercase tracking-widest bg-foreground text-background">
+                                {submittingThread ? "Saving..." : "Save Changes"}
+                            </Button>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
                 <div className="space-y-16">
                     {commentsData?.data?.length > 0 ? (
                         <>
@@ -262,6 +260,14 @@ export default function ThreadDetail() {
                                     comment={comment}
                                     allComments={commentsData.data}
                                     depth={0}
+                                    onReply={(id) => {
+                                        setParentId(id);
+                                        setShowCommentDialog(true);
+                                    }}
+                                    onUpdate={() => {
+                                        fetchComments(1);
+                                        fetchThread();
+                                    }}
                                 />
                             ))}
 

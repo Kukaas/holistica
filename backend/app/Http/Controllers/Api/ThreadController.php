@@ -73,12 +73,21 @@ class ThreadController extends Controller
         return response()->json($thread->load('user'), 201);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Thread $thread)
     {
-    //
+        if (auth()->id() !== $thread->user_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+        ]);
+
+        $thread->update($validated);
+
+        app(\App\Services\TypesenseService::class)->indexThread($thread);
+
+        return response()->json($thread->load('user'));
     }
 
     /**
@@ -86,6 +95,18 @@ class ThreadController extends Controller
      */
     public function destroy(Thread $thread)
     {
-    //
+        if (auth()->id() !== $thread->user_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $protocol = $thread->protocol;
+        $thread->delete();
+
+        if ($protocol) {
+            $protocol->discussion_count = $protocol->threads()->count() + $protocol->reviews()->count();
+            $protocol->save();
+        }
+
+        return response()->json(['message' => 'Thread deleted']);
     }
 }
