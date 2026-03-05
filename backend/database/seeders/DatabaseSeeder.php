@@ -100,6 +100,16 @@ class DatabaseSeeder extends Seeder
                 'content' => "Ashwagandha is an adaptogen that helps the body 'adapt' to stress by modulating the HPA axis. The KSM-66 extract is the most researched form with the highest concentration of withanolides.\n\nTake 300mg in the morning and 300mg in the evening. This protocol is essential for those experiencing 'Adrenal Fatigue' or chronic high-cortisol levels.",
                 'tags' => ['adaptogens', 'hormone-balance', 'stress-management'],
             ],
+            [
+                'title' => 'Insulin Sensitivity: The 7-Minute HIIT Protocol',
+                'content' => "High-Intensity Interval Training (HIIT) is one of the fastest ways to deplete muscular glycogen and force the body to improve insulin sensitivity. This protocol requires only 7 minutes but must be performed at 90-100% effort.\n\nCycle: 30 seconds of maximum intensity exercise (burpees, sprints, or mountain climbers) followed by 10 seconds of rest. Repeat for 12 cycles. This 'metabolic stress' triggers GLUT4 translocation, allowing cells to take up glucose more efficiently for hours after the workout.",
+                'tags' => ['HIIT', 'fitness', 'insulin-sensitivity', 'metabolism'],
+            ],
+            [
+                'title' => 'Forest Bathing (Shinrin-Yoku) for Cortisol Suppression',
+                'content' => "Nature therapy isn't just 'a walk in the woods'—it's a biological intervention. Trees release phytoncides (antimicrobial allelochemic volatile organic compounds) that, when inhaled, significantly increase the activity of human natural killer (NK) cells.\n\nSpend at least 40 minutes in a wooded area, moving slowly and engaging all five senses. Clinical studies show this practice reduces salivary cortisol by up to 12% and lowers blood pressure more effectively than urban walking.",
+                'tags' => ['nature-therapy', 'stress-reduction', 'immunity', 'mental-health'],
+            ],
         ];
 
         // Create Protocols

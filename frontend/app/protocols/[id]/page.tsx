@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { ThreadItemSkeleton, ReviewItemSkeleton } from "@/components/ItemSkeleton";
+import { ThreadCard } from "@/components/ThreadCard";
 
 export default function ProtocolDetail() {
     const { user } = useAuth();
@@ -451,31 +452,7 @@ export default function ProtocolDetail() {
                 ) : threadsData?.data?.length > 0 ? (
                     <div className="grid gap-6">
                         {threadsData.data.map((thread: any) => (
-                            <Link key={thread.id} href={`/discussions/${thread.id}`}>
-                                <div className="p-10 rounded-none border-2 border-muted hover:border-foreground transition-all bg-muted/5 group shadow-[0px_0px_0px_0px_rgba(0,0,0,0)] hover:shadow-2xl hover:shadow-muted/20">
-                                    <div className="flex gap-2 mb-4">
-                                        {Array.isArray(thread.tags) && thread.tags.map((tag: string) => (
-                                            <Badge key={tag} variant="outline" className="text-[8px] font-black uppercase tracking-widest px-2 py-0 border-muted">
-                                                {tag}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                    <h3 className="text-xl font-black mb-4 group-hover:translate-x-1 transition-transform">{thread.title}</h3>
-                                    <p className="text-xs text-muted-foreground mb-6 line-clamp-2 italic">
-                                        {thread.content}
-                                    </p>
-                                    <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
-                                        <span className="flex items-center gap-2">
-                                            <MessageSquare className="h-3.5 w-3.5" />
-                                            {thread.comments_count || 0} comments
-                                        </span>
-                                        <span className="flex items-center gap-2">
-                                            <Clock className="h-3.5 w-3.5" />
-                                            {new Date(thread.created_at).toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                </div>
-                            </Link>
+                            <ThreadCard key={thread.id} thread={thread} variant="simple" />
                         ))}
 
                         {threadsData.last_page > 1 && (
