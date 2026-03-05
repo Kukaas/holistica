@@ -43,7 +43,7 @@ This checklist tracks the progress of the Holistica Community Protocol & Discuss
 - [x] Responsive design & animations
 
 ## Phase 6: Documentation & Final Delivery [ ]
-- [ ] Complete `README.md` (setup, API overview, Typesense config)
-- [ ] Finalize `.env.example` files
-- [ ] 1–2 page implementation notes
+- [x] Complete `README.md` (setup, API overview, Typesense config)
+- [x] Finalize `.env.example` files
+- [x] 1–2 page implementation notes
 - [ ] Final verification and walkthrough
