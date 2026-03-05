@@ -25,7 +25,16 @@ class DatabaseSeeder extends Seeder
         ]
         ));
 
-        // Create 9 more users for variety
+        // Create second specific user
+        $users->push(\App\Models\User::firstOrCreate(
+        ['email' => 'jhondoe@example.com'],
+        [
+            'name' => 'Jhon Doe',
+            'password' => \Illuminate\Support\Facades\Hash::make('12345678'),
+        ]
+        ));
+
+        // Create 8 more users for variety
         \App\Models\User::factory(9)->create()->each(fn($u) => $users->push($u));
 
         $realisticProtocols = [

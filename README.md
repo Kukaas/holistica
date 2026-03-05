@@ -14,7 +14,7 @@ The project is built as a monolith repository containing both the frontend and b
 ### Prerequisites
 - PHP 8.2+ and Composer
 - Node.js 18+ and npm/yarn
-- MySQL or MariaDB
+- MySQL (Create a database named `holistica` before running migrations)
 - Typesense Server (Cloud or Local via Docker)
 
 ### 1. Backend Setup
@@ -39,6 +39,9 @@ The project is built as a monolith repository containing both the frontend and b
    ```bash
    php artisan migrate --seed
    ```
+   *Note: This will seed demo data, including the following test users:*
+   - **Email:** `maligaso.chesterlukea@gmail.com` | **Password:** `12345678`
+   - **Email:** `jhondoe@example.com` | **Password:** `12345678`
 7. Start the local development server:
    ```bash
    php artisan serve
