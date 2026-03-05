@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api";
+import { protocolService } from "@/lib/services/protocols";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,10 +74,10 @@ export function CreateProtocolDialog({ onSuccess, trigger, protocol }: CreatePro
 
         setLoading(true);
         try {
-            let response;
+            let data;
             if (protocol) {
                 // Update mode
-                response = await api.put(`/protocols/${protocol.id}`, {
+                data = await protocolService.update(protocol.id, {
                     title,
                     content,
                     tags
@@ -87,7 +87,7 @@ export function CreateProtocolDialog({ onSuccess, trigger, protocol }: CreatePro
                 });
             } else {
                 // Create mode
-                response = await api.post("/protocols", {
+                data = await protocolService.create({
                     title,
                     content,
                     tags
@@ -107,7 +107,7 @@ export function CreateProtocolDialog({ onSuccess, trigger, protocol }: CreatePro
             if (onSuccess) {
                 onSuccess();
             } else if (!protocol) {
-                router.push(`/protocols/${response.data.id}`);
+                router.push(`/protocols/${data.id}`);
             }
         } catch (error: any) {
             toast.error(protocol ? "Update Failed" : "Submission Failed", {

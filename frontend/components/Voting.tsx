@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import api from "@/lib/api";
+import { voteService } from "@/lib/services/votes";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -37,12 +37,12 @@ export function Voting({ type, id, initialUps = 0, initialDowns = 0, userVote = 
         try {
             const nextValue = currentVote === score ? 0 : score;
 
-            await api.post("/votes", {
-                votable_id: String(id),
-                votable_type: type === "protocol" ? "App\\Models\\Protocol" :
+            await voteService.cast(
+                String(id),
+                type === "protocol" ? "App\\Models\\Protocol" :
                     type === "thread" ? "App\\Models\\Thread" : "App\\Models\\Comment",
-                value: nextValue
-            });
+                nextValue
+            );
 
             if (currentVote === 1) setUps(prev => Math.max(0, prev - 1));
             if (currentVote === -1) setDowns(prev => Math.max(0, prev - 1));

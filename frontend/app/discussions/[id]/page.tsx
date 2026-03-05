@@ -46,6 +46,7 @@ export default function ThreadDetail() {
     const [isEditing, setIsEditing] = useState(false);
     const [editTitle, setEditTitle] = useState("");
     const [editContent, setEditContent] = useState("");
+    const [editTags, setEditTags] = useState("");
     const [submittingThread, setSubmittingThread] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -55,6 +56,7 @@ export default function ThreadDetail() {
             setThread(data);
             setEditTitle(data.title);
             setEditContent(data.content || "");
+            setEditTags(data.tags?.join(", ") || "");
             fetchComments(1);
         } catch (error) {
             console.error("Error fetching thread:", error);
@@ -111,9 +113,10 @@ export default function ThreadDetail() {
         try {
             await threadService.update(id as string, {
                 title: editTitle,
-                content: editContent
+                content: editContent,
+                tags: editTags.split(",").map(t => t.trim()).filter(t => t !== "")
             });
-            setThread({ ...thread, title: editTitle, content: editContent });
+            setThread({ ...thread, title: editTitle, content: editContent, tags: editTags.split(",").map(t => t.trim()).filter(t => t !== "") });
             setIsEditing(false);
             toast.success("Discussion updated!", { id: toastId });
         } catch (error) {
@@ -275,6 +278,15 @@ export default function ThreadDetail() {
                                         onChange={(e) => setEditContent(e.target.value)}
                                         className="rounded-none border-2 font-medium min-h-[200px]"
                                         required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="font-black uppercase text-[10px]">Tags (Comma separated)</Label>
+                                    <Input
+                                        value={editTags}
+                                        onChange={(e) => setEditTags(e.target.value)}
+                                        placeholder="e.g. results, dosage, side-effects"
+                                        className="rounded-none border-2 h-12 font-bold"
                                     />
                                 </div>
                             </div>

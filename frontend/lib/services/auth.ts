@@ -12,9 +12,7 @@ export const authService = {
     },
 
     async logout() {
-        // Optional: Add backend logout if needed
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("user");
+        await api.post("/logout");
     }
 };
 

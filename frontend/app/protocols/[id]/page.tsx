@@ -6,7 +6,7 @@ import { protocolService } from "@/lib/services/protocols";
 import { threadService } from "@/lib/services/threads";
 import { reviewService } from "@/lib/services/reviews";
 import { CreateProtocolDialog } from "@/components/CreateProtocolDialog";
-import { Star, MessageSquare, Clock, User } from "lucide-react";
+import { Star, MessageSquare, Clock, User, Edit, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Separator } from "@/components/ui/separator";
@@ -233,13 +233,13 @@ export default function ProtocolDetail() {
                 tags={protocol.tags}
             >
                 {isAuthor && (
-                    <div className="flex items-center gap-4">
+                    <div className="flex gap-4">
                         <CreateProtocolDialog
                             protocol={protocol}
                             onSuccess={fetchProtocol}
                             trigger={
-                                <Button variant="outline" size="sm" className="rounded-none h-10 px-6 font-black uppercase tracking-widest text-[9px] border-2">
-                                    Edit
+                                <Button variant="outline" size="sm" className="rounded-none border-2 font-black uppercase tracking-widest text-[10px]">
+                                    <Edit className="w-3 h-3 mr-2" /> Edit
                                 </Button>
                             }
                         />
@@ -248,9 +248,9 @@ export default function ProtocolDetail() {
                             size="sm"
                             onClick={handleDelete}
                             disabled={isDeleting}
-                            className="rounded-none h-10 px-6 font-black uppercase tracking-widest text-[9px] border-2 hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-all"
+                            className="rounded-none border-2 font-black uppercase tracking-widest text-[10px] text-red-500 hover:text-red-700 hover:bg-red-500/10 border-red-500/20"
                         >
-                            {isDeleting ? "Trashing..." : "Delete"}
+                            <Trash className="w-3 h-3 mr-2" /> {isDeleting ? "Trashing..." : "Delete"}
                         </Button>
                     </div>
                 )}

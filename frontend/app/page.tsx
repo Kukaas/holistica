@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import api from "@/lib/api";
+import { protocolService } from "@/lib/services/protocols";
 import { ArrowRight, Wind } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -14,10 +14,8 @@ export default function Home() {
   useEffect(() => {
     async function fetchProtocols() {
       try {
-        const response = await api.get("/protocols", {
-          params: { sort: "rating" }
-        });
-        setProtocols(response.data.data.slice(0, 6)); // Show top 6 rated
+        const response = await protocolService.getAll({ sort: "rating" });
+        setProtocols(response.data.slice(0, 6)); // Show top 6 rated
       } catch (error) {
         console.error("Error fetching protocols:", error);
       } finally {
