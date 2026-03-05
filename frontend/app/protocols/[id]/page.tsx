@@ -42,6 +42,8 @@ export default function ProtocolDetail() {
 
     // Form States
     const [threadTitle, setThreadTitle] = useState("");
+    const [threadContent, setThreadContent] = useState("");
+    const [threadTags, setThreadTags] = useState("");
     const [reviewRating, setReviewRating] = useState(5);
     const [reviewComment, setReviewComment] = useState("");
     const [showThreadDialog, setShowThreadDialog] = useState(false);
@@ -104,8 +106,12 @@ export default function ProtocolDetail() {
             await api.post("/threads", {
                 protocol_id: id,
                 title: threadTitle,
+                content: threadContent,
+                tags: threadTags.split(",").map(t => t.trim()).filter(t => t !== ""),
             });
             setThreadTitle("");
+            setThreadContent("");
+            setThreadTags("");
             setShowThreadDialog(false);
             fetchThreads(1); // Refresh threads
             fetchProtocol(); // Refresh count
@@ -280,10 +286,6 @@ export default function ProtocolDetail() {
                         <MessageSquare className="h-4 w-4" />
                         <span>{protocol.threads_count || 0} discussions</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Star className="h-4 w-4" />
-                        <span>{protocol.reviews_count || 0} reviews</span>
-                    </div>
                     <div className="flex items-center py-2 h-10 px-6 border-2 border-muted hover:border-foreground transition-all">
                         <Voting
                             type="protocol"
@@ -394,6 +396,43 @@ export default function ProtocolDetail() {
                                             required
                                         />
                                     </div>
+                                    <div className="space-y-2">
+                                        <Label className="font-black uppercase text-[10px]">Message</Label>
+                                        <Textarea
+                                            value={threadContent}
+                                            onChange={(e) => setThreadContent(e.target.value)}
+                                            placeholder="Elaborate your thoughts..."
+                                            className="rounded-none border-2 min-h-[120px]"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <Label className="font-black uppercase text-[10px]">Tags (Comma separated)</Label>
+                                        <Input
+                                            value={threadTags}
+                                            onChange={(e) => setThreadTags(e.target.value)}
+                                            placeholder="e.g. results, dosage, side-effects"
+                                            className="rounded-none border-2 h-12 font-bold"
+                                        />
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            <span className="text-[9px] font-black uppercase text-muted-foreground/40 mr-1 self-center">Sample tags:</span>
+                                            {['dosage', 'results', 'side-effects', 'synergy', 'timing', 'brand', 'stacking', 'safety'].map(tag => (
+                                                <button
+                                                    key={tag}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const current = threadTags.split(',').map(t => t.trim()).filter(t => t !== "");
+                                                        if (!current.includes(tag)) {
+                                                            setThreadTags(current.concat(tag).join(', '));
+                                                        }
+                                                    }}
+                                                    className="text-[9px] font-black uppercase tracking-widest px-2 py-1 border border-muted hover:border-foreground hover:bg-muted/10 transition-all"
+                                                >
+                                                    +{tag}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
                                     <Button type="submit" disabled={submitting} className="w-full rounded-none h-14 font-black uppercase tracking-widest bg-foreground text-background">
                                         {submitting ? "Starting..." : "Create Thread"}
                                     </Button>
@@ -414,7 +453,17 @@ export default function ProtocolDetail() {
                         {threadsData.data.map((thread: any) => (
                             <Link key={thread.id} href={`/discussions/${thread.id}`}>
                                 <div className="p-10 rounded-none border-2 border-muted hover:border-foreground transition-all bg-muted/5 group shadow-[0px_0px_0px_0px_rgba(0,0,0,0)] hover:shadow-2xl hover:shadow-muted/20">
+                                    <div className="flex gap-2 mb-4">
+                                        {Array.isArray(thread.tags) && thread.tags.map((tag: string) => (
+                                            <Badge key={tag} variant="outline" className="text-[8px] font-black uppercase tracking-widest px-2 py-0 border-muted">
+                                                {tag}
+                                            </Badge>
+                                        ))}
+                                    </div>
                                     <h3 className="text-xl font-black mb-4 group-hover:translate-x-1 transition-transform">{thread.title}</h3>
+                                    <p className="text-xs text-muted-foreground mb-6 line-clamp-2 italic">
+                                        {thread.content}
+                                    </p>
                                     <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
                                         <span className="flex items-center gap-2">
                                             <MessageSquare className="h-3.5 w-3.5" />

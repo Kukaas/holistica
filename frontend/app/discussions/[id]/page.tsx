@@ -11,12 +11,14 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Voting } from "@/components/Voting";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -41,15 +43,18 @@ export default function ThreadDetail() {
     const [parentId, setParentId] = useState<string | null>(null);
     const [showCommentDialog, setShowCommentDialog] = useState(false);
 
-    const [isEditingThread, setIsEditingThread] = useState(false);
-    const [editThreadTitle, setEditThreadTitle] = useState("");
+    const [isEditing, setIsEditing] = useState(false);
+    const [editTitle, setEditTitle] = useState("");
+    const [editContent, setEditContent] = useState("");
     const [submittingThread, setSubmittingThread] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     async function fetchThread() {
         try {
             const response = await api.get(`/threads/${id}`);
             setThread(response.data);
-            setEditThreadTitle(response.data.title);
+            setEditTitle(response.data.title);
+            setEditContent(response.data.content || "");
             fetchComments(1);
         } catch (error) {
             console.error("Error fetching thread:", error);
@@ -104,9 +109,12 @@ export default function ThreadDetail() {
         setSubmittingThread(true);
         const toastId = toast.loading("Updating discussion...");
         try {
-            await api.put(`/threads/${id}`, { title: editThreadTitle });
-            setIsEditingThread(false);
-            fetchThread();
+            await api.put(`/threads/${id}`, {
+                title: editTitle,
+                content: editContent
+            });
+            setThread({ ...thread, title: editTitle, content: editContent });
+            setIsEditing(false);
             toast.success("Discussion updated!", { id: toastId });
         } catch (error) {
             console.error("Error updating thread:", error);
@@ -149,43 +157,68 @@ export default function ThreadDetail() {
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-8 mb-20 border-l-4 border-foreground pl-10"
+                className="space-y-12 mb-20 border-l-4 border-foreground pl-10"
             >
-                <div className="flex items-start justify-between gap-8">
-                    <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[0.9] text-foreground flex-1">{thread.title}</h1>
-                    {isThreadOwner && (
-                        <div className="flex gap-4">
-                            <Button variant="outline" size="sm" onClick={() => setIsEditingThread(true)} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px]">
-                                <Edit className="w-3 h-3 mr-2" /> Edit
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={handleThreadDelete} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px] text-red-500 hover:text-red-700 hover:bg-red-500/10 border-red-500/20">
-                                <Trash className="w-3 h-3 mr-2" /> Delete
-                            </Button>
+                <div className="flex flex-col gap-8">
+                    <div className="flex items-start justify-between gap-8">
+                        <div className="flex-1">
+                            <div className="flex gap-2 mb-6">
+                                {Array.isArray(thread.tags) && thread.tags.map((tag: string) => (
+                                    <Badge key={tag} variant="outline" className="text-[10px] font-black uppercase tracking-widest px-3 py-1 border-muted">
+                                        {tag}
+                                    </Badge>
+                                ))}
+                            </div>
+                            <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[0.9] text-foreground mb-10">{thread.title}</h1>
                         </div>
-                    )}
-                </div>
-                <div className="flex flex-wrap items-center gap-10 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
-                    <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10 border-2 border-foreground rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
-                            <AvatarFallback className="text-[10px] font-black rounded-none bg-muted/20">
-                                {thread.user?.name?.slice(0, 2).toUpperCase() || "HB"}
-                            </AvatarFallback>
-                        </Avatar>
-                        <span className="text-foreground">{thread.user?.name || "Host Builder"}</span>
+                        {isThreadOwner && (
+                            <div className="flex gap-4">
+                                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px]">
+                                    <Edit className="w-3 h-3 mr-2" /> Edit
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={handleThreadDelete} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px] text-red-500 hover:text-red-700 hover:bg-red-500/10 border-red-500/20">
+                                    <Trash className="w-3 h-3 mr-2" /> Delete
+                                </Button>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex items-center py-2 px-6 border-2 border-muted hover:border-foreground transition-all h-12">
-                        <Voting
-                            type="thread"
-                            id={thread.id}
-                            initialUps={thread.ups || 0}
-                            initialDowns={thread.downs || 0}
-                        />
+                    <div className="max-w-3xl border-y-2 border-muted/10 py-10 mb-6">
+                        <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed italic whitespace-pre-wrap">
+                            "{thread.content}"
+                        </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <Clock className="h-4 w-4" />
-                        <span>Discussion in {thread.protocol?.title}</span>
+                    <div className="flex flex-wrap items-center gap-10 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+                        <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10 border-2 border-foreground rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+                                <AvatarFallback className="text-[10px] font-black rounded-none bg-muted/20">
+                                    {thread.user?.name?.slice(0, 2).toUpperCase() || "HB"}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col">
+                                <span className="text-foreground">{thread.user?.name || "Host Builder"}</span>
+                                <span className="text-[9px] text-muted-foreground/40 lowercase">Member since {new Date(thread.user?.created_at).getFullYear() || "2024"}</span>
+                            </div>
+                        </div>
+
+                        <div className="h-8 w-[1px] bg-muted/20" />
+
+                        <div className="flex items-center h-12">
+                            <Voting
+                                type="thread"
+                                id={thread.id}
+                                initialUps={thread.ups || 0}
+                                initialDowns={thread.downs || 0}
+                            />
+                        </div>
+
+                        <div className="h-8 w-[1px] bg-muted/20" />
+
+                        <div className="flex items-center gap-3">
+                            <Clock className="h-4 w-4" />
+                            <span>In {thread.protocol?.title} • {new Date(thread.created_at).toLocaleDateString()}</span>
+                        </div>
                     </div>
                 </div>
             </motion.div>
@@ -236,26 +269,43 @@ export default function ThreadDetail() {
                     </DialogContent>
                 </Dialog>
 
-                <Dialog open={isEditingThread} onOpenChange={setIsEditingThread}>
+                <Dialog open={isEditing} onOpenChange={setIsEditing}>
                     <DialogContent className="rounded-none border-4 border-foreground">
                         <DialogHeader>
                             <DialogTitle className="font-black uppercase tracking-widest">
-                                Edit Discussion Title
+                                Edit Discussion
                             </DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleThreadEdit} className="space-y-6 pt-4">
-                            <div className="space-y-2">
-                                <Label className="font-black uppercase text-[10px]">Title</Label>
-                                <Input
-                                    value={editThreadTitle}
-                                    onChange={(e) => setEditThreadTitle(e.target.value)}
-                                    className="rounded-none border-2 h-14 font-bold"
-                                    required
-                                />
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label className="font-black uppercase text-[10px]">Topic</Label>
+                                    <Input
+                                        value={editTitle}
+                                        onChange={(e) => setEditTitle(e.target.value)}
+                                        className="rounded-none border-2 font-bold h-12"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="font-black uppercase text-[10px]">Message</Label>
+                                    <Textarea
+                                        value={editContent}
+                                        onChange={(e) => setEditContent(e.target.value)}
+                                        className="rounded-none border-2 font-medium min-h-[200px]"
+                                        required
+                                    />
+                                </div>
                             </div>
-                            <Button type="submit" disabled={submittingThread} className="w-full rounded-none h-14 font-black uppercase tracking-widest bg-foreground text-background">
-                                {submittingThread ? "Saving..." : "Save Changes"}
-                            </Button>
+                            <DialogFooter>
+                                <Button
+                                    type="submit"
+                                    disabled={submittingThread}
+                                    className="w-full rounded-none h-14 font-black uppercase tracking-widest bg-foreground text-background"
+                                >
+                                    {submittingThread ? "Saving..." : "Save Changes"}
+                                </Button>
+                            </DialogFooter>
                         </form>
                     </DialogContent>
                 </Dialog>

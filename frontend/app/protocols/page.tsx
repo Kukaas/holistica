@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { CreateProtocolDialog } from "@/components/CreateProtocolDialog";
+import { Voting } from "@/components/Voting";
 import { useAuth } from "@/context/AuthContext";
 
 export default function ProtocolsBrowse() {
@@ -146,19 +147,27 @@ export default function ProtocolsBrowse() {
                                             {protocol.content}
                                         </p>
                                     </CardContent>
-                                    <CardFooter className="px-10 pb-10 flex items-center justify-between border-t border-muted/20 pt-8 mt-auto mx-10 px-0">
+                                    <CardFooter className="px-10 pb-10 flex flex-wrap items-center justify-between border-t border-muted/20 pt-8 mt-auto mx-10 px-0 gap-4">
                                         <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
                                             <span className="flex items-center gap-2">
                                                 <MessageSquare className="h-3 w-3" />
                                                 {protocol.threads_count || 0}
                                             </span>
+                                            <div className="flex items-center" onClick={(e) => e.preventDefault()}>
+                                                <Voting
+                                                    type="protocol"
+                                                    id={protocol.id}
+                                                    initialUps={protocol.ups || 0}
+                                                    initialDowns={protocol.downs || 0}
+                                                />
+                                            </div>
                                             <span className="flex items-center gap-2">
                                                 <Star className="h-3 w-3" />
                                                 {protocol.reviews_count || 0}
                                             </span>
                                         </div>
-                                        <div className="text-[10px] font-black pointer-events-none uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity">
-                                            Protocol Details
+                                        <div className="text-[10px] font-black pointer-events-none uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                            Details →
                                         </div>
                                     </CardFooter>
                                 </Card>

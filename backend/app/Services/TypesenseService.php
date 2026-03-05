@@ -50,6 +50,8 @@ class TypesenseService
                 'name' => 'threads',
                 'fields' => [
                     ['name' => 'title', 'type' => 'string'],
+                    ['name' => 'content', 'type' => 'string'],
+                    ['name' => 'tags', 'type' => 'string[]', 'facet' => true],
                     ['name' => 'protocol_id', 'type' => 'string', 'facet' => true],
                     ['name' => 'created_at', 'type' => 'int64'],
                 ],
@@ -84,6 +86,8 @@ class TypesenseService
         $document = [
             'id' => (string) $thread->id,
             'title' => (string) $thread->title,
+            'content' => (string) $thread->content,
+            'tags' => is_string($thread->tags) ? (json_decode($thread->tags, true) ?? []) : ($thread->tags ?? []),
             'protocol_id' => (string) $thread->protocol_id,
             'created_at' => (int) $thread->created_at->timestamp,
         ];
@@ -98,6 +102,16 @@ class TypesenseService
         ], $params);
 
         return $this->client->collections['protocols']->documents->search($searchParams);
+    }
+
+    public function searchThreads(string $query, array $params = []): array
+    {
+        $searchParams = array_merge([
+            'q' => $query,
+            'query_by' => 'title,content,tags',
+        ], $params);
+
+        return $this->client->collections['threads']->documents->search($searchParams);
     }
 
     public function deleteProtocol($id): void { $this->client->collections['protocols']->documents[(string) $id]->delete(); }

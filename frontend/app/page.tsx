@@ -15,8 +15,10 @@ export default function Home() {
   useEffect(() => {
     async function fetchProtocols() {
       try {
-        const response = await api.get("/protocols");
-        setProtocols(response.data.data.slice(0, 6)); // Show first 6
+        const response = await api.get("/protocols", {
+          params: { sort: "rating" }
+        });
+        setProtocols(response.data.data.slice(0, 6)); // Show top 6 rated
       } catch (error) {
         console.error("Error fetching protocols:", error);
       } finally {

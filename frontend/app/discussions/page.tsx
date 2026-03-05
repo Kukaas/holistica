@@ -92,8 +92,19 @@ export default function DiscussionsBrowse() {
                             <Link href={`/discussions/${thread.id}`}>
                                 <Card className="rounded-none border-2 border-muted hover:border-foreground transition-all group bg-muted/5 shadow-none hover:bg-muted/10">
                                     <CardContent className="p-8 md:p-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-                                        <div className="space-y-4 flex-1">
-                                            <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">
+                                        <div className="flex-1">
+                                            <div className="flex gap-2 mb-4">
+                                                {Array.isArray(thread.tags) && thread.tags.map((tag: string) => (
+                                                    <Badge key={tag} variant="outline" className="text-[8px] font-black uppercase tracking-widest px-2 py-0 border-muted">
+                                                        {tag}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                            <h3 className="text-xl font-black mb-4 group-hover:translate-x-1 transition-transform">{thread.title}</h3>
+                                            <p className="text-sm text-muted-foreground mb-6 line-clamp-3 italic">
+                                                {thread.content}
+                                            </p>
+                                            <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
                                                 <span className="flex items-center gap-2">
                                                     <User className="h-3 w-3" />
                                                     {thread.user?.name || "Member"}
@@ -104,10 +115,7 @@ export default function DiscussionsBrowse() {
                                                     {new Date(thread.created_at).toLocaleDateString()}
                                                 </span>
                                             </div>
-                                            <CardTitle className="text-xl md:text-2xl font-black group-hover:text-foreground transition-all">
-                                                {thread.title}
-                                            </CardTitle>
-                                            <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground/60 bg-muted/10 w-fit px-4 py-1.5 border border-muted/20">
+                                            <div className="flex items-center gap-3 mt-6 text-[10px] font-bold text-muted-foreground/60 bg-muted/10 w-fit px-4 py-1.5 border border-muted/20">
                                                 <LinkIcon className="h-3 w-3" />
                                                 <span>Protocol:</span>
                                                 <span className="text-foreground">{thread.protocol?.title}</span>
