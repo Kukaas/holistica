@@ -138,7 +138,7 @@ export default function ThreadDetail() {
     const isThreadOwner = user?.id === thread.user_id;
 
     return (
-        <div className="container max-w-4xl py-24 md:py-32">
+        <div className="container max-w-4xl py-10 md:py-16">
             <Link
                 href={`/protocols/${thread.protocol_id}`}
                 className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground mb-16 transition-colors w-fit"
@@ -196,7 +196,7 @@ export default function ThreadDetail() {
                         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Dialogue</span>
                         <h2 className="text-3xl font-black flex items-center gap-3">
                             <MessageSquare className="h-6 w-6" />
-                            Comments ({thread.comments?.length || 0})
+                            Comments ({thread.comments_count || 0})
                         </h2>
                     </div>
                     <Button

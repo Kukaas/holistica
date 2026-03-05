@@ -141,7 +141,7 @@ export default function ProtocolDetail() {
 
     if (loading) {
         return (
-            <div className="container py-24 animate-pulse">
+            <div className="container py-12 animate-pulse">
                 <div className="h-8 w-48 bg-muted rounded mb-8" />
                 <div className="h-12 w-3/4 bg-muted rounded mb-4" />
                 <div className="h-64 w-full bg-muted rounded" />
@@ -154,7 +154,7 @@ export default function ProtocolDetail() {
     }
 
     return (
-        <div className="container max-w-4xl py-12 md:py-20">
+        <div className="container max-w-4xl py-8 md:py-12">
             <Link
                 href="/"
                 className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground mb-16 transition-colors w-fit"

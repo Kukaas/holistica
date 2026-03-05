@@ -11,6 +11,33 @@ use Illuminate\Database\Eloquent\Builder;
 class ProtocolController extends Controller
 {
     /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string'
+        ]);
+
+        $protocol = Protocol::create([
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+            'tags' => $validated['tags'] ?? [],
+            'author_id' => $request->user()->id,
+            'status' => 'published',
+            'avg_rating' => 0.0,
+            'discussion_count' => 0,
+            'ups' => 0,
+            'downs' => 0,
+        ]);
+
+        return response()->json($protocol, 201);
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)

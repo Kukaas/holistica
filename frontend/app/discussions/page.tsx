@@ -43,7 +43,7 @@ export default function DiscussionsBrowse() {
     return (
         <div className="max-w-7xl mx-auto pb-24">
             {/* Header Section */}
-            <header className="mb-20 space-y-8">
+            <header className="mb-12 space-y-8">
                 <Link
                     href="/"
                     className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors w-fit"

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { SearchOverlay } from "./SearchOverlay";
+import { CreateProtocolDialog } from "./CreateProtocolDialog";
 
 import { useAuth } from "@/context/AuthContext";
 import { User as UserIcon, LogOut } from "lucide-react";
@@ -32,6 +33,15 @@ export function Navbar() {
                     <Link href="/discussions" className="transition-colors hover:text-foreground">
                         Discussions
                     </Link>
+                    {user && (
+                        <CreateProtocolDialog
+                            trigger={
+                                <button className="transition-colors hover:text-foreground cursor-pointer">
+                                    Submit
+                                </button>
+                            }
+                        />
+                    )}
                     <SearchOverlay />
                 </div>
 

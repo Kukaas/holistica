@@ -16,8 +16,11 @@ import {
     SelectValue
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { CreateProtocolDialog } from "@/components/CreateProtocolDialog";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ProtocolsBrowse() {
+    const { user } = useAuth();
     const [protocols, setProtocols] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -50,7 +53,7 @@ export default function ProtocolsBrowse() {
     return (
         <div className="max-w-7xl mx-auto pb-24">
             {/* Header Section */}
-            <header className="mb-20 space-y-8">
+            <header className="mb-12 space-y-8">
                 <Link
                     href="/"
                     className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors w-fit"
@@ -70,6 +73,8 @@ export default function ProtocolsBrowse() {
                             Explore the collective archive of wellness, healing, and biohacking protocols.
                         </p>
                     </div>
+
+                    {user && <CreateProtocolDialog onSuccess={() => fetchProtocols()} />}
                 </div>
             </header>
 
@@ -191,3 +196,4 @@ export default function ProtocolsBrowse() {
         </div>
     );
 }
+

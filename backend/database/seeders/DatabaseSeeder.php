@@ -98,6 +98,11 @@ class DatabaseSeeder extends Seeder
                 'content' => 'Include 1-2 servings of raw sauerkraut, kimchi, or kefir daily to introduce beneficial probiotics and support your microbiome.',
                 'tags' => ['probiotics', 'microbiome', 'digestion'],
             ],
+            [
+                'title' => 'Biohacking Mastery 101',
+                'content' => 'A comprehensive collection of hacks for elite performance, focusing on light optimization, temperature control, and nutrient timing.',
+                'tags' => ['biohacking', 'performance', 'mastery', 'sample-tag'],
+            ],
         ];
 
         // Create 12 Protocols from realistic data

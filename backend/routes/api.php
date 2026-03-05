@@ -18,6 +18,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('me', [AuthController::class , 'me']);
 
     // Protected Engagement Routes
+    Route::post('protocols', [ProtocolController::class , 'store']);
     Route::post('threads', [ThreadController::class , 'store']);
     Route::put('threads/{thread}', [ThreadController::class , 'update']);
     Route::delete('threads/{thread}', [ThreadController::class , 'destroy']);
