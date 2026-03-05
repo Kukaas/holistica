@@ -48,29 +48,29 @@ export default function ProtocolDetail() {
         <div className="container max-w-4xl py-12 md:py-20">
             <Link
                 href="/"
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-12 transition-colors w-fit"
+                className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground mb-16 transition-colors w-fit"
             >
-                <ArrowLeft className="h-4 w-4" /> Back to protocols
+                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back to registry
             </Link>
 
             <motion.header
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-6 mb-12"
+                className="space-y-8 mb-20 border-l-4 border-foreground pl-10"
             >
                 <div className="flex flex-wrap items-center gap-3">
                     {Array.isArray(protocol.tags) && protocol.tags.map((tag: string) => (
-                        <Badge key={tag} variant="secondary" className="bg-muted text-[10px] uppercase tracking-wider font-bold">
+                        <Badge key={tag} variant="secondary" className="bg-foreground text-background rounded-none text-[9px] uppercase tracking-widest font-black py-1 px-3">
                             {tag}
                         </Badge>
                     ))}
                 </div>
 
-                <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-[1.1]">
+                <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[0.9] text-foreground">
                     {protocol.title}
                 </h1>
 
-                <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-8 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
                     <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         <span>Francisca</span>
@@ -80,20 +80,21 @@ export default function ProtocolDetail() {
                         <span>{new Date(protocol.created_at).toLocaleDateString()}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 border-none" />
-                        <span className="font-medium text-foreground">{protocol.avg_rating} rating</span>
+                        <Star className="h-4 w-4 fill-foreground text-foreground" />
+                        <span className="text-foreground">{protocol.avg_rating} rating</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <MessageSquare className="h-4 w-4" />
                         <span>{protocol.discussion_count} discussions</span>
                     </div>
-                    <Separator orientation="vertical" className="h-4" />
-                    <Voting
-                        type="protocol"
-                        id={protocol.id}
-                        initialUps={protocol.ups || 0}
-                        initialDowns={protocol.downs || 0}
-                    />
+                    <div className="flex items-center py-2 h-10 px-6 border-2 border-muted hover:border-foreground transition-all">
+                        <Voting
+                            type="protocol"
+                            id={protocol.id}
+                            initialUps={protocol.ups || 0}
+                            initialDowns={protocol.downs || 0}
+                        />
+                    </div>
                 </div>
             </motion.header>
 
@@ -103,9 +104,9 @@ export default function ProtocolDetail() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="prose prose-zinc dark:prose-invert max-w-none mb-20"
+                className="prose prose-zinc dark:prose-invert max-w-none mb-32"
             >
-                <div className="text-lg leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                <div className="text-xl leading-relaxed text-foreground/90 font-medium whitespace-pre-wrap">
                     {protocol.content}
                 </div>
             </motion.article>
@@ -113,32 +114,40 @@ export default function ProtocolDetail() {
             <Separator className="mb-12 opacity-50" />
 
             {/* Discussion Section Placeholder */}
-            <section className="space-y-8">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold tracking-tight">Discussions</h2>
-                    <Button variant="outline" size="sm" className="rounded-full px-5">
+            <section className="space-y-12">
+                <div className="flex items-center justify-between border-b pb-8">
+                    <div className="space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Engagement</span>
+                        <h2 className="text-3xl font-black tracking-tight">Discussions</h2>
+                    </div>
+                    <Button variant="outline" size="sm" className="rounded-none border-2 h-12 px-8 font-black uppercase tracking-widest text-[10px]">
                         Start a thread
                     </Button>
                 </div>
 
                 {protocol.threads?.length > 0 ? (
-                    <div className="grid gap-4">
+                    <div className="grid gap-6">
                         {protocol.threads.map((thread: any) => (
                             <Link key={thread.id} href={`/discussions/${thread.id}`}>
-                                <div className="p-6 rounded-xl border border-muted hover:border-foreground transition-all bg-card/50">
-                                    <h3 className="font-medium mb-2">{thread.title}</h3>
-                                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                        <span>{thread.comments_count || 0} comments</span>
-                                        <span>•</span>
-                                        <span>Last active yesterday</span>
+                                <div className="p-10 rounded-none border-2 border-muted hover:border-foreground transition-all bg-muted/5 group">
+                                    <h3 className="text-xl font-black mb-4 group-hover:translate-x-1 transition-transform">{thread.title}</h3>
+                                    <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
+                                        <span className="flex items-center gap-2">
+                                            <MessageSquare className="h-3.5 w-3.5" />
+                                            {thread.comments_count || 0} comments
+                                        </span>
+                                        <span className="flex items-center gap-2">
+                                            <Clock className="h-3.5 w-3.5" />
+                                            Active yesterday
+                                        </span>
                                     </div>
                                 </div>
                             </Link>
                         ))}
                     </div>
                 ) : (
-                    <div className="py-20 text-center border border-dashed rounded-2xl border-muted">
-                        <p className="text-sm text-muted-foreground">No discussions yet. Be the first to start the conversation.</p>
+                    <div className="py-24 text-center border-4 border-dashed rounded-[3rem] border-muted/20">
+                        <p className="text-sm font-black text-muted-foreground/20 uppercase tracking-[0.4em]">No dialogue found</p>
                     </div>
                 )}
             </section>

@@ -18,6 +18,8 @@ class Protocol extends Model
         'status',
         'avg_rating',
         'discussion_count',
+        'ups',
+        'downs',
     ];
 
     protected $casts = [

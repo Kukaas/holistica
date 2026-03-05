@@ -15,6 +15,8 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('title');
             $table->text('content');
+            $table->integer('ups')->default(0);
+            $table->integer('downs')->default(0);
             $table->foreignUuid('author_id')->constrained('users')->onDelete('cascade');
             $table->json('tags')->nullable();
             $table->enum('status', ['draft', 'published', 'archived'])->default('published');

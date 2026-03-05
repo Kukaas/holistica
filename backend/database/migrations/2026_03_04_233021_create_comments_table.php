@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignUuid('thread_id')->constrained('threads')->onDelete('cascade');
             $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
             $table->text('content');
+            $table->integer('ups')->default(0);
+            $table->integer('downs')->default(0);
             $table->timestamps();
         });
     }

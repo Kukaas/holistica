@@ -15,6 +15,8 @@ class Thread extends Model
         'user_id',
         'title',
         'status',
+        'ups',
+        'downs',
     ];
 
     public function protocol()

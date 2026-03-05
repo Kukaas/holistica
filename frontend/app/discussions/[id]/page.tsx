@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ArrowLeft, User, ThumbsUp, ThumbsDown, Clock } from "lucide-react";
+import { MessageSquare, ArrowLeft, User, Clock } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Separator } from "@/components/ui/separator";
@@ -47,29 +47,31 @@ export default function ThreadDetail() {
         return comments
             .filter((c) => (parentId === null ? !c.parent_id : c.parent_id === parentId))
             .map((comment) => (
-                <div key={comment.id} className={`space-y-4 ${depth > 0 ? "ml-8 border-l pl-6" : ""}`}>
-                    <div className="flex gap-4">
-                        <Avatar className="h-8 w-8 border">
-                            <AvatarFallback className="text-[10px]">
+                <div key={comment.id} className={`space-y-6 ${depth > 0 ? "ml-8 border-l-2 border-muted pl-10" : "border-b border-muted/20 pb-12"}`}>
+                    <div className="flex gap-6">
+                        <Avatar className="h-10 w-10 border-2 border-muted rounded-none">
+                            <AvatarFallback className="text-[10px] font-black rounded-none">
                                 {comment.user?.name?.slice(0, 2).toUpperCase() || "UN"}
                             </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm font-semibold">{comment.user?.name || "Anonymous"}</span>
-                                <span className="text-[10px] text-muted-foreground">
+                        <div className="flex-1 space-y-3">
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm font-black uppercase tracking-widest text-foreground">{comment.user?.name || "Anonymous"}</span>
+                                <span className="text-[10px] font-bold text-muted-foreground/50">
                                     {new Date(comment.created_at).toLocaleDateString()}
                                 </span>
                             </div>
-                            <p className="text-sm text-foreground/90 leading-relaxed">{comment.content}</p>
-                            <div className="flex items-center gap-4 pt-2">
-                                <Voting
-                                    type="comment"
-                                    id={comment.id}
-                                    initialUps={comment.ups || 0}
-                                    initialDowns={comment.downs || 0}
-                                />
-                                <button className="text-[10px] font-medium text-muted-foreground hover:underline">Reply</button>
+                            <p className="text-[15px] font-medium text-foreground/80 leading-relaxed max-w-2xl">{comment.content}</p>
+                            <div className="flex items-center gap-6 pt-2">
+                                <div className="flex items-center py-1 px-4 border-2 border-muted hover:border-foreground transition-all">
+                                    <Voting
+                                        type="comment"
+                                        id={comment.id}
+                                        initialUps={comment.ups || 0}
+                                        initialDowns={comment.downs || 0}
+                                    />
+                                </div>
+                                <button className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors">Reply</button>
                             </div>
                         </div>
                     </div>
@@ -79,30 +81,31 @@ export default function ThreadDetail() {
     };
 
     return (
-        <div className="container max-w-3xl py-12 md:py-20">
+        <div className="container max-w-4xl py-24 md:py-32">
             <Link
                 href={`/protocols/${thread.protocol_id}`}
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-12 transition-colors w-fit"
+                className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground mb-16 transition-colors w-fit"
             >
-                <ArrowLeft className="h-4 w-4" /> Back to protocol
+                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back to protocol
             </Link>
 
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-6 mb-16"
+                className="space-y-8 mb-20 border-l-4 border-foreground pl-10"
             >
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{thread.title}</h1>
-                <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6 border">
-                            <AvatarFallback className="text-[8px]">
+                <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[0.9] text-foreground">{thread.title}</h1>
+                <div className="flex flex-wrap items-center gap-10 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+                    <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 border-2 border-foreground rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+                            <AvatarFallback className="text-[10px] font-black rounded-none bg-muted/20">
                                 {thread.user?.name?.slice(0, 2).toUpperCase() || "HB"}
                             </AvatarFallback>
                         </Avatar>
-                        <span>{thread.user?.name || "Host Builder"}</span>
+                        <span className="text-foreground">{thread.user?.name || "Host Builder"}</span>
                     </div>
-                    <div className="flex items-center gap-2 font-medium text-foreground">
+
+                    <div className="flex items-center py-2 px-6 border-2 border-muted hover:border-foreground transition-all h-12">
                         <Voting
                             type="thread"
                             id={thread.id}
@@ -110,32 +113,34 @@ export default function ThreadDetail() {
                             initialDowns={thread.downs || 0}
                         />
                     </div>
-                    <div className="flex items-center gap-2">
+
+                    <div className="flex items-center gap-3">
                         <Clock className="h-4 w-4" />
-                        <span>Discussion started in {thread.protocol?.title}</span>
+                        <span>Discussion in {thread.protocol?.title}</span>
                     </div>
                 </div>
             </motion.div>
 
-            <Separator className="mb-12 opacity-50" />
-
-            <section className="space-y-12">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold flex items-center gap-2">
-                        <MessageSquare className="h-5 w-5" />
-                        Comments ({thread.comments?.length || 0})
-                    </h2>
-                    <Button size="sm" className="rounded-full px-5 h-8 text-xs font-bold uppercase tracking-wider bg-foreground text-background">
+            <section className="space-y-16 pt-20 border-t-2 border-muted/20">
+                <div className="flex items-center justify-between border-b-2 border-muted pb-8">
+                    <div className="space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Dialogue</span>
+                        <h2 className="text-3xl font-black flex items-center gap-3">
+                            <MessageSquare className="h-6 w-6" />
+                            Comments ({thread.comments?.length || 0})
+                        </h2>
+                    </div>
+                    <Button size="sm" className="rounded-none border-2 h-14 px-10 font-black uppercase tracking-widest text-[11px] bg-foreground text-background hover:bg-foreground/90 transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)]">
                         Add Comment
                     </Button>
                 </div>
 
-                <div className="space-y-10">
+                <div className="space-y-16">
                     {thread.comments?.length > 0 ? (
                         renderComments(thread.comments)
                     ) : (
-                        <div className="text-center py-20 text-muted-foreground text-sm border border-dashed rounded-2xl">
-                            No comments yet. Start the discussion.
+                        <div className="py-32 text-center border-4 border-dashed rounded-[3rem] border-muted/20">
+                            <p className="text-xs font-black text-muted-foreground/20 uppercase tracking-[0.4em]">No dialogue found</p>
                         </div>
                     )}
                 </div>

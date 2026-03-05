@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
             $table->string('title');
             $table->enum('status', ['open', 'closed'])->default('open');
+            $table->integer('ups')->default(0);
+            $table->integer('downs')->default(0);
             $table->timestamps();
         });
     }

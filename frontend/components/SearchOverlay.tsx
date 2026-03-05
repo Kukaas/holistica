@@ -41,7 +41,6 @@ export function SearchOverlay() {
             setLoading(true);
             try {
                 const response = await api.get(`/protocols?search=${query}`);
-                // Hydrating from Laravel pagination structure
                 setResults(response.data.data || []);
             } catch (error) {
                 console.error("Search error:", error);
@@ -57,41 +56,47 @@ export function SearchOverlay() {
         <>
             <div
                 onClick={() => setOpen(true)}
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border bg-muted/50 text-muted-foreground cursor-pointer hover:bg-muted transition-colors"
+                className="hidden md:flex items-center gap-4 px-6 py-2.5 rounded-none border-2 bg-muted/30 text-muted-foreground cursor-pointer hover:border-foreground transition-all group"
             >
-                <Search className="h-4 w-4" />
-                <span className="text-xs">Search protocols... (⌘K)</span>
+                <Search className="h-3.5 w-3.5 group-hover:text-foreground transition-colors" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Search Registry...</span>
+                <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded-none border bg-muted px-1.5 font-mono text-[10px] font-black opacity-100 sm:flex">
+                    <span className="text-xs">⌘</span>K
+                </kbd>
             </div>
 
             <CommandDialog open={open} onOpenChange={setOpen}>
-                <CommandInput
-                    placeholder="Search all protocols..."
-                    onValueChange={setQuery}
-                />
-                <CommandList>
-                    <CommandEmpty>
-                        {loading ? "Searching..." : "No protocols found."}
-                    </CommandEmpty>
-                    {results.length > 0 && (
-                        <CommandGroup heading="Protocols">
-                            {results.map((protocol) => (
-                                <CommandItem
-                                    key={protocol.id}
-                                    onSelect={() => {
-                                        setOpen(false);
-                                        router.push(`/protocols/${protocol.id}`);
-                                    }}
-                                    className="flex flex-col items-start gap-1 py-3"
-                                >
-                                    <span className="font-medium">{protocol.title}</span>
-                                    <span className="text-xs text-muted-foreground line-clamp-1">
-                                        {protocol.content}
-                                    </span>
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    )}
-                </CommandList>
+                <div className="rounded-none border-4 border-foreground p-1">
+                    <CommandInput
+                        placeholder="SEARCH THE ARCHIVE..."
+                        onValueChange={setQuery}
+                        className="h-16 font-black uppercase tracking-widest text-sm"
+                    />
+                    <CommandList className="max-h-[400px]">
+                        <CommandEmpty className="py-10 text-center font-black uppercase tracking-widest text-[10px] text-muted-foreground/40">
+                            {loading ? "FETCHING..." : "NO MATCHES FOUND."}
+                        </CommandEmpty>
+                        {results.length > 0 && (
+                            <CommandGroup heading="REGISTRY MATCHES" className="font-black uppercase tracking-[0.3em] text-[10px] px-4 pt-4">
+                                {results.map((protocol) => (
+                                    <CommandItem
+                                        key={protocol.id}
+                                        onSelect={() => {
+                                            setOpen(false);
+                                            router.push(`/protocols/${protocol.id}`);
+                                        }}
+                                        className="flex flex-col items-start gap-1 py-6 px-6 rounded-none border-b border-muted last:border-0 hover:bg-muted/30 cursor-pointer"
+                                    >
+                                        <span className="font-black text-lg uppercase tracking-tight">{protocol.title}</span>
+                                        <span className="text-[11px] font-medium text-muted-foreground line-clamp-1 italic">
+                                            {protocol.content}
+                                        </span>
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        )}
+                    </CommandList>
+                </div>
             </CommandDialog>
         </>
     );

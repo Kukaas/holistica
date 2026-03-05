@@ -15,6 +15,8 @@ class Comment extends Model
         'user_id',
         'parent_id',
         'content',
+        'ups',
+        'downs',
     ];
 
     public function parent()

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Protocol;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProtocolController extends Controller
 {
@@ -38,37 +40,56 @@ class ProtocolController extends Controller
                 $results = $service->searchProtocols($request->search, $params);
                 $ids = collect($results['hits'])->pluck('document.id');
 
-                // Return Eloquent models based on Typesense IDs to keep author relations etc.
-                return Protocol::with('author')
-                    ->whereIn('id', $ids)
-                    ->orderByRaw("FIELD(id, " . $ids->implode(',') . ")")
-                    ->paginate(10);
+                if ($ids->isNotEmpty()) {
+                    // Quote the IDs for the SQL FIELD function to handle UUIDs
+                    $quotedIds = $ids->map(fn($id) => "'$id'")->implode(',');
+
+                    return Protocol::with('author')
+                        ->whereIn('id', $ids)
+                        ->orderByRaw("FIELD(id, $quotedIds)")
+                        ->paginate(10);
+                }
+
+                // If Typesense returns no hits, return empty pagination instead of fall-through to all
+                return Protocol::whereRaw('1 = 0')->paginate(10);
             }
             catch (\Exception $e) {
-                // Fallback to SQL search if Typesense fails
+                // Fallback to SQL search if Typesense fails or is unavailable
                 \Log::error('Typesense Search Fail: ' . $e->getMessage());
+
+                $query = Protocol::query()->with('author')
+                    ->where(function (Builder $q) use ($request) {
+                    $q->where('title', 'LIKE', "%{$request->search}%")
+                        ->orWhere('tags', 'LIKE', "%{$request->search}%");
+                });
+
+                return $this->applySorting($query, $request->get('sort'))->paginate(10);
             }
         }
 
         // 2. Default SQL Logic (Fallback or browse mode)
         $query = Protocol::query()->with('author');
-
-        // Sorting
-        $sort = $request->get('sort', 'recent');
-        switch ($sort) {
-            case 'reviews':
-                $query->orderBy('discussion_count', 'desc');
-                break;
-            case 'rating':
-                $query->orderBy('avg_rating', 'desc');
-                break;
-            case 'recent':
-            default:
-                $query->latest();
-                break;
-        }
+        $query = $this->applySorting($query, $request->get('sort'));
 
         return $query->paginate(10);
+    }
+
+    /**
+     * Helper to apply consistent sorting across SQL queries.
+     */
+    private function applySorting($query, $sort)
+    {
+        switch ($sort) {
+            case 'reviews':
+                return $query->orderBy('discussion_count', 'desc');
+            case 'rating':
+                return $query->orderBy('avg_rating', 'desc');
+            case 'upvoted':
+                return $query->orderBy('ups', 'desc');
+            case 'recent':
+            default:
+                return $query->latest();
+        }
     }
 
     public function show(Protocol $protocol)
