@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import api from "@/lib/api";
+import { protocolService } from "@/lib/services/protocols";
+import { threadService } from "@/lib/services/threads";
+import { reviewService } from "@/lib/services/reviews";
 import { CreateProtocolDialog } from "@/components/CreateProtocolDialog";
 import { Star, MessageSquare, Clock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,8 +58,8 @@ export default function ProtocolDetail() {
 
     async function fetchProtocol() {
         try {
-            const response = await api.get(`/protocols/${id}`);
-            setProtocol(response.data);
+            const data = await protocolService.getById(id as string);
+            setProtocol(data);
             fetchThreads(1);
             fetchReviews(1);
         } catch (error) {
@@ -70,8 +72,8 @@ export default function ProtocolDetail() {
     async function fetchThreads(page: number) {
         setLoadingThreads(true);
         try {
-            const response = await api.get(`/protocols/${id}/threads?page=${page}`);
-            setThreadsData(response.data);
+            const data = await protocolService.getThreads(id as string, page);
+            setThreadsData(data);
             setThreadsPage(page);
         } catch (error) {
             console.error("Error fetching threads:", error);
@@ -83,8 +85,8 @@ export default function ProtocolDetail() {
     async function fetchReviews(page: number) {
         setLoadingReviews(true);
         try {
-            const response = await api.get(`/protocols/${id}/reviews?page=${page}`);
-            setReviewsData(response.data);
+            const data = await protocolService.getReviews(id as string, page);
+            setReviewsData(data);
             setReviewsPage(page);
         } catch (error) {
             console.error("Error fetching reviews:", error);
@@ -107,7 +109,7 @@ export default function ProtocolDetail() {
         }
         setSubmitting(true);
         try {
-            await api.post("/threads", {
+            await threadService.create({
                 protocol_id: id,
                 title: threadTitle,
                 content: threadContent,
@@ -136,7 +138,7 @@ export default function ProtocolDetail() {
         }
         setSubmitting(true);
         try {
-            await api.post("/reviews", {
+            await reviewService.create({
                 protocol_id: id,
                 rating: reviewRating,
                 comment: reviewComment,
@@ -159,7 +161,7 @@ export default function ProtocolDetail() {
 
         setIsDeleting(true);
         try {
-            await api.delete(`/protocols/${id}`);
+            await protocolService.delete(id as string);
 
             let timeLeft = 10;
             const toastId = toast.success("Protocol trashed", {
@@ -198,7 +200,7 @@ export default function ProtocolDetail() {
 
     const handleRestore = async () => {
         try {
-            await api.post(`/protocols/${id}/restore`);
+            await protocolService.restore(id as string);
             toast.success("Protocol restored");
             fetchProtocol();
         } catch (error) {

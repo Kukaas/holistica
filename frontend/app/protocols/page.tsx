@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import api from "@/lib/api";
+import { protocolService } from "@/lib/services/protocols";
 import { Search, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -31,11 +31,9 @@ export default function ProtocolsBrowse() {
     async function fetchProtocols() {
         setLoading(true);
         try {
-            const response = await api.get("/protocols", {
-                params: { search, sort, page }
-            });
-            setProtocols(response.data.data);
-            setPagination(response.data);
+            const data = await protocolService.getAll({ search, sort, page });
+            setProtocols(data.data);
+            setPagination(data);
         } catch (error) {
             console.error("Error fetching protocols:", error);
         } finally {

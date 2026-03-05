@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import api from "@/lib/api";
+import { threadService } from "@/lib/services/threads";
 import { Search, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -21,11 +21,9 @@ export default function DiscussionsBrowse() {
     async function fetchThreads() {
         setLoading(true);
         try {
-            const response = await api.get("/threads", {
-                params: { search, page }
-            });
-            setThreads(response.data.data);
-            setPagination(response.data);
+            const data = await threadService.getAll({ search, page });
+            setThreads(data.data);
+            setPagination(data);
         } catch (error) {
             console.error("Error fetching threads:", error);
         } finally {

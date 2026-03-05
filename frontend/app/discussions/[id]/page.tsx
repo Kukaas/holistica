@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import api from "@/lib/api";
+import { threadService } from "@/lib/services/threads";
+import { commentService } from "@/lib/services/comments";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Clock } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -50,10 +51,10 @@ export default function ThreadDetail() {
 
     async function fetchThread() {
         try {
-            const response = await api.get(`/threads/${id}`);
-            setThread(response.data);
-            setEditTitle(response.data.title);
-            setEditContent(response.data.content || "");
+            const data = await threadService.getById(id as string);
+            setThread(data);
+            setEditTitle(data.title);
+            setEditContent(data.content || "");
             fetchComments(1);
         } catch (error) {
             console.error("Error fetching thread:", error);
@@ -65,8 +66,8 @@ export default function ThreadDetail() {
     async function fetchComments(page: number) {
         setLoadingComments(true);
         try {
-            const response = await api.get(`/threads/${id}/comments?page=${page}`);
-            setCommentsData(response.data);
+            const data = await threadService.getComments(id as string, page);
+            setCommentsData(data);
             setCommentsPage(page);
         } catch (error) {
             console.error("Error fetching comments:", error);
@@ -84,7 +85,7 @@ export default function ThreadDetail() {
         setSubmitting(true);
         const toastId = toast.loading("Posting reply...");
         try {
-            await api.post("/comments", {
+            await commentService.create({
                 thread_id: id,
                 parent_id: parentId,
                 content: commentContent,
@@ -108,7 +109,7 @@ export default function ThreadDetail() {
         setSubmittingThread(true);
         const toastId = toast.loading("Updating discussion...");
         try {
-            await api.put(`/threads/${id}`, {
+            await threadService.update(id as string, {
                 title: editTitle,
                 content: editContent
             });
@@ -127,7 +128,7 @@ export default function ThreadDetail() {
         if (!confirm("Are you sure you want to delete this discussion?")) return;
         const toastId = toast.loading("Deleting discussion...");
         try {
-            await api.delete(`/threads/${id}`);
+            await threadService.delete(id as string);
             toast.success("Discussion deleted!", { id: toastId });
             router.push("/discussions");
         } catch (error) {
