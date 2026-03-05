@@ -4,14 +4,9 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ArrowLeft, User, Clock } from "lucide-react";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { Separator } from "@/components/ui/separator";
+import { MessageSquare, Clock } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Voting } from "@/components/Voting";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import {
     Dialog,
     DialogContent,
@@ -24,6 +19,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { CommentItem } from "@/components/CommentItem";
+import { Pagination } from "@/components/Pagination";
+import { NoResults } from "@/components/NoResults";
+import { PageHeader } from "@/components/PageHeader";
+import { SectionHeader } from "@/components/SectionHeader";
 import { useAuth } from "@/context/AuthContext";
 import { Edit, Trash } from "lucide-react";
 import { toast } from "sonner";
@@ -147,42 +146,26 @@ export default function ThreadDetail() {
 
     return (
         <div className="container max-w-4xl py-10 md:py-16">
-            <Link
-                href={`/protocols/${thread.protocol_id}`}
-                className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground mb-16 transition-colors w-fit"
+            <PageHeader
+                backHref={`/protocols/${thread.protocol_id}`}
+                backLabel="Back to protocol"
+                title={thread.title}
+                tags={thread.tags}
             >
-                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back to protocol
-            </Link>
-
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-12 mb-20 border-l-4 border-foreground pl-10"
-            >
-                <div className="flex flex-col gap-8">
-                    <div className="flex items-start justify-between gap-8">
-                        <div className="flex-1">
-                            <div className="flex gap-2 mb-6">
-                                {Array.isArray(thread.tags) && thread.tags.map((tag: string) => (
-                                    <Badge key={tag} variant="outline" className="text-[10px] font-black uppercase tracking-widest px-3 py-1 border-muted">
-                                        {tag}
-                                    </Badge>
-                                ))}
-                            </div>
-                            <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[0.9] text-foreground mb-10">{thread.title}</h1>
-                        </div>
-                        {isThreadOwner && (
-                            <div className="flex gap-4">
-                                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px]">
-                                    <Edit className="w-3 h-3 mr-2" /> Edit
-                                </Button>
-                                <Button variant="outline" size="sm" onClick={handleThreadDelete} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px] text-red-500 hover:text-red-700 hover:bg-red-500/10 border-red-500/20">
-                                    <Trash className="w-3 h-3 mr-2" /> Delete
-                                </Button>
-                            </div>
-                        )}
+                {isThreadOwner && (
+                    <div className="flex gap-4">
+                        <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px]">
+                            <Edit className="w-3 h-3 mr-2" /> Edit
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleThreadDelete} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px] text-red-500 hover:text-red-700 hover:bg-red-500/10 border-red-500/20">
+                            <Trash className="w-3 h-3 mr-2" /> Delete
+                        </Button>
                     </div>
+                )}
+            </PageHeader>
 
+            <div className="space-y-12 mb-20">
+                <div className="flex flex-col gap-8">
                     <div className="max-w-3xl border-y-2 border-muted/10 py-10 mb-6">
                         <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed italic whitespace-pre-wrap">
                             "{thread.content}"
@@ -221,17 +204,14 @@ export default function ThreadDetail() {
                         </div>
                     </div>
                 </div>
-            </motion.div>
+            </div>
 
             <section className="space-y-16 pt-20 border-t-2 border-muted/20">
-                <div className="flex items-center justify-between border-b-2 border-muted pb-8">
-                    <div className="space-y-1">
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Dialogue</span>
-                        <h2 className="text-3xl font-black flex items-center gap-3">
-                            <MessageSquare className="h-6 w-6" />
-                            Comments ({thread.comments_count || 0})
-                        </h2>
-                    </div>
+                <SectionHeader
+                    title={`Comments (${thread.comments_count || 0})`}
+                    subtitle="Dialogue"
+                    icon={MessageSquare}
+                >
                     <Button
                         onClick={() => {
                             setParentId(null);
@@ -242,7 +222,7 @@ export default function ThreadDetail() {
                     >
                         Add Comment
                     </Button>
-                </div>
+                </SectionHeader>
 
                 <Dialog open={showCommentDialog} onOpenChange={setShowCommentDialog}>
                     <DialogContent className="rounded-none border-4 border-foreground">
@@ -337,32 +317,15 @@ export default function ThreadDetail() {
                             ))}
 
                             {commentsData.last_page > 1 && (
-                                <div className="flex justify-start gap-4 mt-12">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={commentsPage === 1}
-                                        onClick={() => fetchComments(commentsPage - 1)}
-                                        className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-8 h-12"
-                                    >
-                                        Prev
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={commentsPage === commentsData.last_page}
-                                        onClick={() => fetchComments(commentsPage + 1)}
-                                        className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-8 h-12"
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
+                                <Pagination
+                                    currentPage={commentsPage}
+                                    totalPages={commentsData.last_page}
+                                    onPageChange={fetchComments}
+                                />
                             )}
                         </>
                     ) : (
-                        <div className="py-32 text-center border-4 border-dashed rounded-[3rem] border-muted/20">
-                            <p className="text-xs font-black text-muted-foreground/20 uppercase tracking-[0.4em]">No dialogue found</p>
-                        </div>
+                        <NoResults message="No dialogue found" />
                     )}
                 </div>
             </section>

@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Search, ArrowLeft, Clock, User, Link as LinkIcon } from "lucide-react";
+import { Search, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { DiscussionListSkeleton } from "@/components/ItemSkeleton";
 import { ThreadCard } from "@/components/ThreadCard";
+import { Pagination } from "@/components/Pagination";
+import { NoResults } from "@/components/NoResults";
 
 export default function DiscussionsBrowse() {
     const [threads, setThreads] = useState<any[]>([]);
@@ -94,43 +93,17 @@ export default function DiscussionsBrowse() {
                         </motion.div>
                     ))
                 ) : (
-                    <div className="py-40 text-center border-4 border-dashed rounded-[3rem] border-muted/20">
-                        <p className="text-sm font-black text-muted-foreground/20 uppercase tracking-[0.4em]">No dialogue found</p>
-                    </div>
+                    <NoResults message="No dialogue found" />
                 )}
             </div>
 
-            {/* Pagination Controls */}
-            {pagination && pagination.last_page > 1 && (
-                <div className="mt-20 flex justify-center gap-4">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={page === 1}
-                        onClick={() => {
-                            setPage(p => p - 1);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className="rounded-none border-2 font-black uppercase tracking-widest text-[10px] px-8 h-12"
-                    >
-                        Prev
-                    </Button>
-                    <div className="flex items-center px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">
-                        Page {page} of {pagination.last_page}
-                    </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={page === pagination.last_page}
-                        onClick={() => {
-                            setPage(p => p + 1);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className="rounded-none border-2 font-black uppercase tracking-widest text-[10px] px-8 h-12"
-                    >
-                        Next
-                    </Button>
-                </div>
+            {pagination && (
+                <Pagination
+                    currentPage={page}
+                    totalPages={pagination.last_page}
+                    onPageChange={setPage}
+                    center={true}
+                />
             )}
         </div>
     );

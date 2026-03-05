@@ -4,9 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { CreateProtocolDialog } from "@/components/CreateProtocolDialog";
-import { Badge } from "@/components/ui/badge";
-import { Star, MessageSquare, ArrowLeft, Clock, User, Share2 } from "lucide-react";
-import Link from "next/link";
+import { Star, MessageSquare, Clock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Separator } from "@/components/ui/separator";
@@ -26,6 +24,11 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { ThreadItemSkeleton, ReviewItemSkeleton } from "@/components/ItemSkeleton";
 import { ThreadCard } from "@/components/ThreadCard";
+import { ReviewCard } from "@/components/ReviewCard";
+import { Pagination } from "@/components/Pagination";
+import { NoResults } from "@/components/NoResults";
+import { PageHeader } from "@/components/PageHeader";
+import { SectionHeader } from "@/components/SectionHeader";
 
 export default function ProtocolDetail() {
     const { user } = useAuth();
@@ -221,14 +224,12 @@ export default function ProtocolDetail() {
 
     return (
         <div className="container max-w-4xl py-8 md:py-12">
-            <div className="flex items-center justify-between mb-16">
-                <Link
-                    href="/protocols"
-                    className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors w-fit"
-                >
-                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back to registry
-                </Link>
-
+            <PageHeader
+                backHref="/protocols"
+                backLabel="Back to registry"
+                title={protocol.title}
+                tags={protocol.tags}
+            >
                 {isAuthor && (
                     <div className="flex items-center gap-4">
                         <CreateProtocolDialog
@@ -251,25 +252,9 @@ export default function ProtocolDetail() {
                         </Button>
                     </div>
                 )}
-            </div>
+            </PageHeader>
 
-            <motion.header
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-8 mb-20 border-l-4 border-foreground pl-10"
-            >
-                <div className="flex flex-wrap items-center gap-3">
-                    {Array.isArray(protocol.tags) && protocol.tags.map((tag: string) => (
-                        <Badge key={tag} variant="secondary" className="bg-foreground text-background rounded-none text-[9px] uppercase tracking-widest font-black py-1 px-3">
-                            {tag}
-                        </Badge>
-                    ))}
-                </div>
-
-                <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[0.9] text-foreground">
-                    {protocol.title}
-                </h1>
-
+            <div className="space-y-12 mb-20">
                 <div className="flex flex-wrap items-center gap-8 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
                     <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
@@ -296,7 +281,7 @@ export default function ProtocolDetail() {
                         />
                     </div>
                 </div>
-            </motion.header>
+            </div>
 
             <Separator className="mb-12 opacity-50" />
 
@@ -313,69 +298,15 @@ export default function ProtocolDetail() {
 
             <Separator className="mb-12 opacity-50" />
 
-            {/* Discussion Section Placeholder */}
-            <section className="space-y-12">
-                <div className="flex items-center justify-between border-b pb-8">
-                    <div className="space-y-1">
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Engagement</span>
-                        <h2 className="text-3xl font-black tracking-tight">Discussions</h2>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
-                            <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="rounded-none border-2 h-12 px-8 font-black uppercase tracking-widest text-[10px]">
-                                    Rate Protocol
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="rounded-none border-4 border-foreground">
-                                <DialogHeader>
-                                    <DialogTitle className="font-black uppercase tracking-widest">Protocol Assessment</DialogTitle>
-                                </DialogHeader>
-                                <form onSubmit={handleCreateReview} className="space-y-6 pt-4">
-                                    <div className="space-y-4">
-                                        <Label className="font-black uppercase text-[10px]">Protocol Grade</Label>
-                                        <div className="flex gap-2">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <button
-                                                    key={star}
-                                                    type="button"
-                                                    onClick={() => setReviewRating(star)}
-                                                    className="group transition-all active:scale-90"
-                                                >
-                                                    <Star
-                                                        className={cn(
-                                                            "h-10 w-10 transition-colors",
-                                                            star <= reviewRating
-                                                                ? "fill-foreground text-foreground"
-                                                                : "text-muted hover:text-foreground/40"
-                                                        )}
-                                                    />
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                                            Selecting {reviewRating} out of 5 stars
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="font-black uppercase text-[10px]">Feedback (Required)</Label>
-                                        <span className="text-[8px] text-muted-foreground block -mt-1 mb-1">Detailed experience helps others</span>
-                                        <Textarea
-                                            value={reviewComment}
-                                            onChange={(e) => setReviewComment(e.target.value)}
-                                            placeholder="Your experience..."
-                                            className="rounded-none border-2 min-h-[100px]"
-                                            required
-                                            minLength={3}
-                                        />
-                                    </div>
-                                    <Button type="submit" disabled={submitting} className="w-full rounded-none h-14 font-black uppercase tracking-widest bg-foreground text-background">
-                                        {submitting ? "Processing..." : "Submit Review"}
-                                    </Button>
-                                </form>
-                            </DialogContent>
-                        </Dialog>
+            <Separator className="mb-12 opacity-50" />
 
+            <section className="space-y-12 mb-32">
+                <SectionHeader
+                    title="Dialogue"
+                    subtitle="Threads"
+                    icon={MessageSquare}
+                >
+                    <div className="flex items-center gap-4">
                         <Dialog open={showThreadDialog} onOpenChange={setShowThreadDialog}>
                             <DialogTrigger asChild>
                                 <Button size="sm" className="rounded-none border-2 h-12 px-8 font-black uppercase tracking-widest text-[10px] bg-foreground text-background hover:bg-foreground/90">
@@ -441,7 +372,7 @@ export default function ProtocolDetail() {
                             </DialogContent>
                         </Dialog>
                     </div>
-                </div>
+                </SectionHeader>
 
                 {loadingThreads ? (
                     <div className="grid gap-6">
@@ -455,44 +386,80 @@ export default function ProtocolDetail() {
                             <ThreadCard key={thread.id} thread={thread} variant="simple" />
                         ))}
 
-                        {threadsData.last_page > 1 && (
-                            <div className="flex justify-start gap-4 mt-4">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={threadsPage === 1}
-                                    onClick={() => fetchThreads(threadsPage - 1)}
-                                    className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-6"
-                                >
-                                    Prev
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={threadsPage === threadsData.last_page}
-                                    onClick={() => fetchThreads(threadsPage + 1)}
-                                    className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-6"
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        )}
+                        <Pagination
+                            currentPage={threadsPage}
+                            totalPages={threadsData.last_page}
+                            onPageChange={fetchThreads}
+                        />
                     </div>
                 ) : (
-                    <div className="py-24 text-center border-4 border-dashed rounded-[3rem] border-muted/20">
-                        <p className="text-sm font-black text-muted-foreground/20 uppercase tracking-[0.4em]">No dialogue found</p>
-                    </div>
+                    <NoResults message="No dialogue found" />
                 )}
             </section>
 
-            {/* Reviews Section */}
             <section className="space-y-12">
-                <div className="flex items-center justify-between border-b pb-8">
-                    <div className="space-y-1">
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Assessment</span>
-                        <h2 className="text-3xl font-black tracking-tight">Community Feedback</h2>
+                <SectionHeader
+                    title="Community Feedback"
+                    subtitle="Assessment"
+                    icon={Star}
+                >
+                    <div className="flex items-center gap-4">
+                        <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="rounded-none border-2 h-12 px-8 font-black uppercase tracking-widest text-[10px]">
+                                    Rate Protocol
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="rounded-none border-4 border-foreground">
+                                <DialogHeader>
+                                    <DialogTitle className="font-black uppercase tracking-widest">Protocol Assessment</DialogTitle>
+                                </DialogHeader>
+                                <form onSubmit={handleCreateReview} className="space-y-6 pt-4">
+                                    <div className="space-y-4">
+                                        <Label className="font-black uppercase text-[10px]">Protocol Grade</Label>
+                                        <div className="flex gap-2">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                    key={star}
+                                                    type="button"
+                                                    onClick={() => setReviewRating(star)}
+                                                    className="group transition-all active:scale-90"
+                                                >
+                                                    <Star
+                                                        className={cn(
+                                                            "h-10 w-10 transition-colors",
+                                                            star <= reviewRating
+                                                                ? "fill-foreground text-foreground"
+                                                                : "text-muted hover:text-foreground/40"
+                                                        )}
+                                                    />
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                            Selecting {reviewRating} out of 5 stars
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="font-black uppercase text-[10px]">Feedback (Required)</Label>
+                                        <span className="text-[8px] text-muted-foreground block -mt-1 mb-1">Detailed experience helps others</span>
+                                        <Textarea
+                                            value={reviewComment}
+                                            onChange={(e) => setReviewComment(e.target.value)}
+                                            placeholder="Your experience..."
+                                            className="rounded-none border-2 min-h-[100px]"
+                                            required
+                                            minLength={3}
+                                        />
+                                    </div>
+                                    <Button type="submit" disabled={submitting} className="w-full rounded-none h-14 font-black uppercase tracking-widest bg-foreground text-background">
+                                        {submitting ? "Processing..." : "Submit Review"}
+                                    </Button>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
                     </div>
-                </div>
+                </SectionHeader>
 
                 {loadingReviews ? (
                     <div className="grid gap-10">
@@ -503,61 +470,17 @@ export default function ProtocolDetail() {
                 ) : reviewsData?.data?.length > 0 ? (
                     <div className="grid gap-10">
                         {reviewsData.data.map((review: any) => (
-                            <div key={review.id} className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex gap-0.5">
-                                            {[1, 2, 3, 4, 5].map((s) => (
-                                                <Star
-                                                    key={s}
-                                                    className={cn(
-                                                        "h-3.5 w-3.5",
-                                                        s <= review.rating ? "fill-foreground text-foreground" : "text-muted"
-                                                    )}
-                                                />
-                                            ))}
-                                        </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground">
-                                            {review.user?.name || "Anonymous"}
-                                        </span>
-                                    </div>
-                                    <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">
-                                        {new Date(review.created_at).toLocaleDateString()}
-                                    </span>
-                                </div>
-                                <p className="text-[15px] font-medium text-foreground/70 leading-relaxed italic border-l-2 border-muted pl-6">
-                                    "{review.comment}"
-                                </p>
-                            </div>
+                            <ReviewCard key={review.id} review={review} />
                         ))}
 
-                        {reviewsData.last_page > 1 && (
-                            <div className="flex justify-start gap-4 mt-4">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={reviewsPage === 1}
-                                    onClick={() => fetchReviews(reviewsPage - 1)}
-                                    className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-6"
-                                >
-                                    Prev
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={reviewsPage === reviewsData.last_page}
-                                    onClick={() => fetchReviews(reviewsPage + 1)}
-                                    className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-6"
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        )}
+                        <Pagination
+                            currentPage={reviewsPage}
+                            totalPages={reviewsData.last_page}
+                            onPageChange={fetchReviews}
+                        />
                     </div>
                 ) : (
-                    <div className="py-24 text-center border-4 border-dashed rounded-[3rem] border-muted/20">
-                        <p className="text-sm font-black text-muted-foreground/20 uppercase tracking-[0.4em]">No assessments recorded</p>
-                    </div>
+                    <NoResults message="No assessments recorded" />
                 )}
             </section>
         </div>

@@ -13,10 +13,11 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { CreateProtocolDialog } from "@/components/CreateProtocolDialog";
 import { useAuth } from "@/context/AuthContext";
 import { ProtocolCard } from "@/components/ProtocolCard";
+import { NoResults } from "@/components/NoResults";
+import { Pagination } from "@/components/Pagination";
 
 export default function ProtocolsBrowse() {
     const { user } = useAuth();
@@ -124,32 +125,17 @@ export default function ProtocolsBrowse() {
                         </motion.div>
                     ))
                 ) : (
-                    <div className="col-span-full py-40 text-center border-4 border-dashed rounded-[3rem] border-muted/20">
-                        <p className="text-sm font-black text-muted-foreground/20 uppercase tracking-[0.4em]">No results in registry</p>
-                    </div>
+                    <NoResults message="No results in registry" />
                 )}
             </div>
 
-            {/* Pagination placeholder */}
-            {pagination && pagination.last_page > 1 && (
-                <div className="mt-20 flex justify-center gap-4">
-                    <Button
-                        variant="outline"
-                        disabled={page === 1}
-                        onClick={() => setPage(p => p - 1)}
-                        className="rounded-none border-2 font-black uppercase tracking-widest text-[10px]"
-                    >
-                        Prev
-                    </Button>
-                    <Button
-                        variant="outline"
-                        disabled={page === pagination.last_page}
-                        onClick={() => setPage(p => p + 1)}
-                        className="rounded-none border-2 font-black uppercase tracking-widest text-[10px]"
-                    >
-                        Next
-                    </Button>
-                </div>
+            {pagination && (
+                <Pagination
+                    currentPage={page}
+                    totalPages={pagination.last_page}
+                    onPageChange={setPage}
+                    center={true}
+                />
             )}
         </div>
     );
