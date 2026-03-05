@@ -11,7 +11,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+    //
     }
 
     /**
@@ -19,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \App\Models\Protocol::observe(\App\Observers\ProtocolObserver::class);
+        \App\Models\Thread::observe(\App\Observers\ThreadObserver::class);
     }
 }
