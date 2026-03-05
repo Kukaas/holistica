@@ -32,6 +32,9 @@ export function Navbar() {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    <div className="md:hidden">
+                        <SearchOverlay variant="icon" />
+                    </div>
                     <Button variant="ghost" size="icon" className="md:hidden rounded-none" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                         {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                     </Button>
