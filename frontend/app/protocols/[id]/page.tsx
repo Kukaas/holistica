@@ -59,7 +59,7 @@ export default function ProtocolDetail() {
                 className="space-y-6 mb-12"
             >
                 <div className="flex flex-wrap items-center gap-3">
-                    {protocol.tags?.map((tag: string) => (
+                    {Array.isArray(protocol.tags) && protocol.tags.map((tag: string) => (
                         <Badge key={tag} variant="secondary" className="bg-muted text-[10px] uppercase tracking-wider font-bold">
                             {tag}
                         </Badge>

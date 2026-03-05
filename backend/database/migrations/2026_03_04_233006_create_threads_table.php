@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('threads', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('protocol_id')->constrained('protocols')->onDelete('cascade');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->uuid('id')->primary();
+            $table->foreignUuid('protocol_id')->constrained('protocols')->onDelete('cascade');
+            $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
             $table->string('title');
             $table->enum('status', ['open', 'closed'])->default('open');
             $table->timestamps();

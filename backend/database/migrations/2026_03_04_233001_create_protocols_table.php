@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('protocols', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('title');
             $table->text('content');
-            $table->foreignId('author_id')->constrained('users')->onDelete('cascade');
+            $table->foreignUuid('author_id')->constrained('users')->onDelete('cascade');
             $table->json('tags')->nullable();
             $table->enum('status', ['draft', 'published', 'archived'])->default('published');
             $table->float('avg_rating', 3, 2)->default(0);
