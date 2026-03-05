@@ -15,69 +15,79 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create 10 users first
-        $users = \App\Models\User::factory(10)->create();
+        // Create specific user first
+        $users = collect([]);
+        $users->push(\App\Models\User::firstOrCreate(
+        ['email' => 'maligaso.chesterlukea@gmail.com'],
+        [
+            'name' => 'Chester Luke Maligaso',
+            'password' => \Illuminate\Support\Facades\Hash::make('12345678'),
+        ]
+        ));
+
+        // Create 9 more users for variety
+        \App\Models\User::factory(9)->create()->each(fn($u) => $users->push($u));
 
         $realisticProtocols = [
             [
                 'title' => 'Morning Hydration & Mineral Routine',
                 'content' => 'Start your day with 16oz of filtered water, a pinch of Celtic sea salt, and a squeeze of lemon to replenish electrolytes and kickstart digestion.',
-                'tags' => json_encode(['hydration', 'morning-routine', 'minerals']),
+                'tags' => ['hydration', 'morning-routine', 'minerals'],
             ],
             [
                 'title' => 'Anti-Inflammatory Turmeric Golden Milk',
                 'content' => 'A soothing evening drink made with almond milk, turmeric, ginger, black pepper, and honey to reduce systemic inflammation and improve sleep quality.',
-                'tags' => json_encode(['anti-inflammatory', 'sleep', 'turmeric']),
+                'tags' => ['anti-inflammatory', 'sleep', 'turmeric'],
             ],
             [
                 'title' => 'Intermittent Fasting for Metabolic Health',
                 'content' => 'A guide to the 16:8 fasting protocol. Focus on nutrient-dense whole foods during the 8-hour window and stay hydrated during the fasting period.',
-                'tags' => json_encode(['fasting', 'metabolism', 'weight-loss']),
+                'tags' => ['fasting', 'metabolism', 'weight-loss'],
             ],
             [
                 'title' => 'Breathwork Technique for Stress Reduction',
                 'content' => 'The Box Breathing method: Inhale for 4 seconds, hold for 4, exhale for 4, hold for 4. Repeat for 5-10 minutes to calm the nervous system.',
-                'tags' => json_encode(['breathwork', 'stress-relief', 'mental-health']),
+                'tags' => ['breathwork', 'stress-relief', 'mental-health'],
             ],
             [
                 'title' => 'Gut-Healing Bone Broth Protocol',
                 'content' => 'Simmer organic grass-fed bones with apple cider vinegar for 24-48 hours. Rich in collagen and amino acids to support gut lining integrity.',
-                'tags' => json_encode(['gut-health', 'collagen', 'nutrition']),
+                'tags' => ['gut-health', 'collagen', 'nutrition'],
             ],
             [
                 'title' => 'Magnesium Soak for Muscle Recovery',
                 'content' => 'Add 2 cups of Epsom salts (magnesium sulfate) to a warm bath. Soak for 20 minutes to relieve muscle tension and support detoxification.',
-                'tags' => json_encode(['recovery', 'magnesium', 'detox']),
+                'tags' => ['recovery', 'magnesium', 'detox'],
             ],
             [
                 'title' => 'Cold Exposure for Immune Support',
                 'content' => 'End your shower with 30-60 seconds of cold water. Gradually increase duration to boost brown fat activation and immune response.',
-                'tags' => json_encode(['cold-therapy', 'immunity', 'biohacking']),
+                'tags' => ['cold-therapy', 'immunity', 'biohacking'],
             ],
             [
                 'title' => 'Digital Detox Evening Routine',
                 'content' => 'Turn off all screens 2 hours before bed. Use red light or candlelight to protect melatonin production and improve circadian rhythm.',
-                'tags' => json_encode(['sleep-hygiene', 'melatonin', 'wellness']),
+                'tags' => ['sleep-hygiene', 'melatonin', 'wellness'],
             ],
             [
                 'title' => 'Lion\'s Mane Mushroom for Cognitive Focus',
                 'content' => 'Incorporate dual-extracted Lion\'s Mane powder into your morning coffee or tea to support Nerve Growth Factor (NGF) and mental clarity.',
-                'tags' => json_encode(['nootropics', 'brain-health', 'focus']),
+                'tags' => ['nootropics', 'brain-health', 'focus'],
             ],
             [
                 'title' => 'Ashwagandha for Adrenal Support',
                 'content' => 'Take 300-600mg of KSM-66 Ashwagandha twice daily to help the body adapt to stress and balance cortisol levels.',
-                'tags' => json_encode(['adaptogens', 'stress', 'hormones']),
+                'tags' => ['adaptogens', 'stress', 'hormones'],
             ],
             [
                 'title' => 'Vitamin D & Sunlight Optimization',
                 'content' => 'Get 10-20 minutes of midday sun exposure without sunscreen. Crucial for bone health, mood regulation, and immune function.',
-                'tags' => json_encode(['vitamin-d', 'sunlight', 'immunity']),
+                'tags' => ['vitamin-d', 'sunlight', 'immunity'],
             ],
             [
                 'title' => 'Fermented Foods for Microbe Diversity',
                 'content' => 'Include 1-2 servings of raw sauerkraut, kimchi, or kefir daily to introduce beneficial probiotics and support your microbiome.',
-                'tags' => json_encode(['probiotics', 'microbiome', 'digestion']),
+                'tags' => ['probiotics', 'microbiome', 'digestion'],
             ],
         ];
 
@@ -133,7 +143,7 @@ class DatabaseSeeder extends Seeder
             \App\Models\Review::factory(rand(1, 3))->create([
                 'protocol_id' => $protocol->id,
                 'user_id' => fn() => $users->random()->id,
-                'content' => fake()->randomElement([
+                'comment' => fake()->randomElement([
                     'A game changer for my daily energy levels.',
                     'Simple to follow and very effective.',
                     'I wish I had known about this years ago!',

@@ -33,14 +33,14 @@ This checklist tracks the progress of the Holistica Community Protocol & Discuss
 - [x] Add reindexing CLI command/route
 
 
-## Phase 5: Frontend Implementation (Next.js + TailwindCSS + shadcn) [ ]
-- [ ] Install `shadcn/ui` and layout components
-- [ ] Build search-as-you-type interface
-- [ ] Implement dynamic filters
-- [ ] Protocol detail page (embedded threads, reviews)
-- [ ] Thread detail page (nested comments)
-- [ ] Voting UX (upvote/downvote feedback)
-- [ ] Responsive design & animations
+## Phase 5: Frontend Implementation (Next.js + TailwindCSS + shadcn) [x]
+- [x] Install `shadcn/ui` and layout components
+- [x] Build search-as-you-type interface
+- [x] Implement dynamic filters
+- [x] Protocol detail page (embedded threads, reviews)
+- [x] Thread detail page (nested comments)
+- [x] Voting UX (upvote/downvote feedback)
+- [x] Responsive design & animations
 
 ## Phase 6: Documentation & Final Delivery [ ]
 - [ ] Complete `README.md` (setup, API overview, Typesense config)
