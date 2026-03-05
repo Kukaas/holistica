@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "@/lib/api";
+import { authService } from "@/lib/services/auth";
 import { useRouter } from "next/navigation";
 
 interface User {
@@ -51,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const logout = async () => {
         try {
-            await api.post("/logout");
+            await authService.logout();
         } catch (error) {
             console.error("Logout error:", error);
         } finally {

@@ -24,35 +24,77 @@ class VoteController extends Controller
         $validated = $request->validate([
             'votable_id' => 'required|string',
             'votable_type' => 'required|string',
-            'value' => 'required|in:1,-1',
+            'value' => 'required|in:1,-1,0',
         ]);
 
         $userId = auth()->id();
+        $votableId = $validated['votable_id'];
+        $votableType = $validated['votable_type'];
+        $newValue = (int)$validated['value'];
 
         // Enforce one vote per user per item
         $existingVote = Vote::where('user_id', $userId)
-            ->where('votable_id', $validated['votable_id'])
-            ->where('votable_type', $validated['votable_type'])
+            ->where('votable_id', $votableId)
+            ->where('votable_type', $votableType)
             ->first();
 
+        $model = $votableType::find($votableId);
+        if (!$model) {
+            return response()->json(['message' => 'Target not found.'], 404);
+        }
+
         if ($existingVote) {
-            // If different value, update. If same, maybe delete (unsure of desired toggle behavior, but user said "only once")
-            // For now, let's stick to the "already voted" message as per existing code
-            return response()->json(['message' => 'You have already voted on this item.'], 422);
+            $oldValue = $existingVote->value;
+
+            // Handle toggle off (deletion)
+            if ($newValue === 0) {
+                // Revert old vote in counters
+                if ($oldValue == 1)
+                    $model->decrement('ups');
+                if ($oldValue == -1)
+                    $model->decrement('downs');
+                $existingVote->forceDelete();
+                return response()->json(['message' => 'Vote removed.'], 200);
+            }
+
+            // Handle switching vote
+            if ($oldValue != $newValue) {
+                // Revert old
+                if ($oldValue == 1)
+                    $model->decrement('ups');
+                if ($oldValue == -1)
+                    $model->decrement('downs');
+
+                // Apply new
+                if ($newValue == 1)
+                    $model->increment('ups');
+                if ($newValue == -1)
+                    $model->increment('downs');
+
+                $existingVote->update(['value' => $newValue]);
+                return response()->json($existingVote, 200);
+            }
+
+            // Same value? Just return it
+            return response()->json($existingVote, 200);
         }
 
-        $vote = Vote::create(array_merge($validated, ['user_id' => $userId]));
-
-        // Update the target model's counters
-        $model = $validated['votable_type']::find($validated['votable_id']);
-        if ($model) {
-            if ($validated['value'] == 1) {
-                $model->increment('ups');
-            }
-            else {
-                $model->increment('downs');
-            }
+        // Handle new vote (but only if not 0)
+        if ($newValue === 0) {
+            return response()->json(['message' => 'No existing vote to remove.'], 400);
         }
+
+        $vote = Vote::create([
+            'user_id' => $userId,
+            'votable_id' => $votableId,
+            'votable_type' => $votableType,
+            'value' => $newValue
+        ]);
+
+        if ($newValue == 1)
+            $model->increment('ups');
+        if ($newValue == -1)
+            $model->increment('downs');
 
         return response()->json($vote, 201);
     }

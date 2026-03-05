@@ -59,6 +59,9 @@ class ProtocolController extends Controller
             elseif ($sort === 'reviews') {
                 $params['sort_by'] = 'discussion_count:desc';
             }
+            elseif ($sort === 'upvoted') {
+                $params['sort_by'] = 'ups:desc';
+            }
             else {
                 $params['sort_by'] = 'created_at:desc';
             }
@@ -87,10 +90,8 @@ class ProtocolController extends Controller
 
                 $query = Protocol::query()->with('author')
                     ->withCount(['threads', 'reviews'])
-                    ->where(function ($q) use ($request) {
-                    $q->where('title', 'LIKE', "%{$request->search}%")
-                        ->orWhere('tags', 'LIKE', "%{$request->search}%");
-                });
+                    ->where('title', 'LIKE', "%{$request->search}%")
+                    ->orWhere('tags', 'LIKE', "%{$request->search}%");
 
                 return $this->applySorting($query, $request->get('sort'))->paginate(10);
             }

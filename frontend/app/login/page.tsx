@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import api from "@/lib/api";
+import { authService } from "@/lib/services/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,8 +22,8 @@ export default function LoginPage() {
         setLoading(true);
         setError("");
         try {
-            const response = await api.post("/login", { email, password });
-            login(response.data.access_token, response.data.user);
+            const data = await authService.login({ email, password });
+            login(data.access_token, data.user);
         } catch (err: any) {
             setError(err.response?.data?.message || "Invalid credentials. Please try again.");
         } finally {

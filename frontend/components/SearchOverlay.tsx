@@ -10,7 +10,7 @@ import {
     CommandItem,
     CommandList,
 } from "@/components/ui/command";
-import api from "@/lib/api";
+import { protocolService } from "@/lib/services/protocols";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 
@@ -41,8 +41,8 @@ export function SearchOverlay({ variant = "full" }: { variant?: "full" | "icon" 
         const timer = setTimeout(async () => {
             setLoading(true);
             try {
-                const response = await api.get(`/protocols?search=${query}`);
-                setResults(response.data.data || []);
+                const response = await protocolService.getAll({ search: query });
+                setResults(response.data || []);
             } catch (error) {
                 console.error("Search error:", error);
             } finally {

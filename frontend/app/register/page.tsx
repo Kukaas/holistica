@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import api from "@/lib/api";
+import { authService } from "@/lib/services/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,13 +31,13 @@ export default function RegisterPage() {
         }
 
         try {
-            const response = await api.post("/register", {
+            const data = await authService.register({
                 name,
                 email,
                 password,
                 password_confirmation: passwordConfirmation,
             });
-            login(response.data.access_token, response.data.user);
+            login(data.access_token, data.user);
         } catch (err: any) {
             setError(err.response?.data?.message || "Registration failed. Please check your data.");
         } finally {

@@ -15,9 +15,15 @@ class Thread extends Model
         'protocol_id',
         'user_id',
         'title',
+        'content',
+        'tags',
         'status',
         'ups',
         'downs',
+    ];
+
+    protected $casts = [
+        'tags' => 'array',
     ];
 
     public function protocol()

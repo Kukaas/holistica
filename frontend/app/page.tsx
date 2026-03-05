@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import api from "@/lib/api";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Star, MessageSquare, ArrowRight, Wind } from "lucide-react";
+import { protocolService } from "@/lib/services/protocols";
+import { ArrowRight, Wind } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { ProtocolCard } from "@/components/ProtocolCard";
 
 export default function Home() {
   const [protocols, setProtocols] = useState<any[]>([]);
@@ -15,8 +14,8 @@ export default function Home() {
   useEffect(() => {
     async function fetchProtocols() {
       try {
-        const response = await api.get("/protocols");
-        setProtocols(response.data.data.slice(0, 6)); // Show first 6
+        const response = await protocolService.getAll({ sort: "rating" });
+        setProtocols(response.data.slice(0, 6)); // Show top 6 rated
       } catch (error) {
         console.error("Error fetching protocols:", error);
       } finally {
@@ -83,45 +82,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
               >
-                <Link href={`/protocols/${protocol.id}`}>
-                  <Card className="h-full hover:border-foreground transition-all group border-2 border-muted/60 shadow-none bg-muted/5 overflow-hidden rounded-none flex flex-col">
-                    <CardHeader className="p-10 pb-6">
-                      <div className="flex justify-between items-start mb-10">
-                        <Badge variant="secondary" className="bg-foreground text-background rounded-none text-[9px] uppercase tracking-[0.2em] font-black py-1.5 px-4">
-                          {protocol.tags?.[0] || "General"}
-                        </Badge>
-                        <div className="flex items-center gap-2 text-[11px] font-black">
-                          <Star className="h-4 w-4 fill-foreground" />
-                          {protocol.avg_rating}
-                        </div>
-                      </div>
-                      <CardTitle className="text-2xl md:text-3xl font-black leading-tight tracking-tight group-hover:text-foreground/70 transition-colors">
-                        {protocol.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-10 pb-10">
-                      <p className="text-sm text-muted-foreground font-medium line-clamp-3 leading-relaxed">
-                        {protocol.content}
-                      </p>
-                    </CardContent>
-                    <CardFooter className="px-10 py-10 flex items-center justify-between border-t border-muted/20 mt-auto bg-muted/10">
-                      <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
-                        <span className="flex items-center gap-2">
-                          <MessageSquare className="h-3.5 w-3.5" />
-                          {protocol.threads_count || 0}
-                        </span>
-                        <span className="flex items-center gap-2">
-                          <Star className="h-3.5 w-3.5" />
-                          {protocol.reviews_count || 0}
-                        </span>
-                        <span>{new Date(protocol.created_at || Date.now()).getFullYear()}</span>
-                      </div>
-                      <div className="text-[10px] font-black uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity">
-                        Details
-                      </div>
-                    </CardFooter>
-                  </Card>
-                </Link>
+                <ProtocolCard protocol={protocol} showYear={true} />
               </motion.div>
             ))
           )}

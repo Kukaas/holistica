@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Trash, Edit } from "lucide-react";
-import api from "@/lib/api";
+import { commentService } from "@/lib/services/comments";
 import { toast } from "sonner";
 
 interface CommentItemProps {
@@ -38,7 +38,7 @@ export function CommentItem({ comment, allComments, depth = 0, onReply, onUpdate
         setSubmitting(true);
         const toastId = toast.loading("Updating comment...");
         try {
-            await api.put(`/comments/${comment.id}`, { content: editContent });
+            await commentService.update(comment.id, { content: editContent });
             setIsEditing(false);
             onUpdate();
             toast.success("Comment updated successfully!", { id: toastId });
@@ -54,7 +54,7 @@ export function CommentItem({ comment, allComments, depth = 0, onReply, onUpdate
         if (!confirm("Are you sure you want to delete this comment?")) return;
         const toastId = toast.loading("Deleting comment...");
         try {
-            await api.delete(`/comments/${comment.id}`);
+            await commentService.delete(comment.id);
             onUpdate();
             toast.success("Comment deleted successfully!", { id: toastId });
         } catch (error) {

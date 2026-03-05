@@ -2,26 +2,28 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import api from "@/lib/api";
+import { threadService } from "@/lib/services/threads";
+import { commentService } from "@/lib/services/comments";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ArrowLeft, User, Clock } from "lucide-react";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { Separator } from "@/components/ui/separator";
+import { MessageSquare, Clock } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Voting } from "@/components/Voting";
-import { cn } from "@/lib/utils";
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { CommentItem } from "@/components/CommentItem";
+import { Pagination } from "@/components/Pagination";
+import { NoResults } from "@/components/NoResults";
+import { PageHeader } from "@/components/PageHeader";
+import { SectionHeader } from "@/components/SectionHeader";
 import { useAuth } from "@/context/AuthContext";
 import { Edit, Trash } from "lucide-react";
 import { toast } from "sonner";
@@ -41,15 +43,20 @@ export default function ThreadDetail() {
     const [parentId, setParentId] = useState<string | null>(null);
     const [showCommentDialog, setShowCommentDialog] = useState(false);
 
-    const [isEditingThread, setIsEditingThread] = useState(false);
-    const [editThreadTitle, setEditThreadTitle] = useState("");
+    const [isEditing, setIsEditing] = useState(false);
+    const [editTitle, setEditTitle] = useState("");
+    const [editContent, setEditContent] = useState("");
+    const [editTags, setEditTags] = useState("");
     const [submittingThread, setSubmittingThread] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     async function fetchThread() {
         try {
-            const response = await api.get(`/threads/${id}`);
-            setThread(response.data);
-            setEditThreadTitle(response.data.title);
+            const data = await threadService.getById(id as string);
+            setThread(data);
+            setEditTitle(data.title);
+            setEditContent(data.content || "");
+            setEditTags(data.tags?.join(", ") || "");
             fetchComments(1);
         } catch (error) {
             console.error("Error fetching thread:", error);
@@ -61,8 +68,8 @@ export default function ThreadDetail() {
     async function fetchComments(page: number) {
         setLoadingComments(true);
         try {
-            const response = await api.get(`/threads/${id}/comments?page=${page}`);
-            setCommentsData(response.data);
+            const data = await threadService.getComments(id as string, page);
+            setCommentsData(data);
             setCommentsPage(page);
         } catch (error) {
             console.error("Error fetching comments:", error);
@@ -80,7 +87,7 @@ export default function ThreadDetail() {
         setSubmitting(true);
         const toastId = toast.loading("Posting reply...");
         try {
-            await api.post("/comments", {
+            await commentService.create({
                 thread_id: id,
                 parent_id: parentId,
                 content: commentContent,
@@ -104,9 +111,13 @@ export default function ThreadDetail() {
         setSubmittingThread(true);
         const toastId = toast.loading("Updating discussion...");
         try {
-            await api.put(`/threads/${id}`, { title: editThreadTitle });
-            setIsEditingThread(false);
-            fetchThread();
+            await threadService.update(id as string, {
+                title: editTitle,
+                content: editContent,
+                tags: editTags.split(",").map(t => t.trim()).filter(t => t !== "")
+            });
+            setThread({ ...thread, title: editTitle, content: editContent, tags: editTags.split(",").map(t => t.trim()).filter(t => t !== "") });
+            setIsEditing(false);
             toast.success("Discussion updated!", { id: toastId });
         } catch (error) {
             console.error("Error updating thread:", error);
@@ -120,7 +131,7 @@ export default function ThreadDetail() {
         if (!confirm("Are you sure you want to delete this discussion?")) return;
         const toastId = toast.loading("Deleting discussion...");
         try {
-            await api.delete(`/threads/${id}`);
+            await threadService.delete(id as string);
             toast.success("Discussion deleted!", { id: toastId });
             router.push("/discussions");
         } catch (error) {
@@ -139,66 +150,72 @@ export default function ThreadDetail() {
 
     return (
         <div className="container max-w-4xl py-10 md:py-16">
-            <Link
-                href={`/protocols/${thread.protocol_id}`}
-                className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground mb-16 transition-colors w-fit"
+            <PageHeader
+                backHref={`/protocols/${thread.protocol_id}`}
+                backLabel="Back to protocol"
+                title={thread.title}
+                tags={thread.tags}
             >
-                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Back to protocol
-            </Link>
+                {isThreadOwner && (
+                    <div className="flex gap-4">
+                        <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px]">
+                            <Edit className="w-3 h-3 mr-2" /> Edit
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleThreadDelete} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px] text-red-500 hover:text-red-700 hover:bg-red-500/10 border-red-500/20">
+                            <Trash className="w-3 h-3 mr-2" /> Delete
+                        </Button>
+                    </div>
+                )}
+            </PageHeader>
 
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-8 mb-20 border-l-4 border-foreground pl-10"
-            >
-                <div className="flex items-start justify-between gap-8">
-                    <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[0.9] text-foreground flex-1">{thread.title}</h1>
-                    {isThreadOwner && (
-                        <div className="flex gap-4">
-                            <Button variant="outline" size="sm" onClick={() => setIsEditingThread(true)} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px]">
-                                <Edit className="w-3 h-3 mr-2" /> Edit
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={handleThreadDelete} className="rounded-none border-2 font-black uppercase tracking-widest text-[10px] text-red-500 hover:text-red-700 hover:bg-red-500/10 border-red-500/20">
-                                <Trash className="w-3 h-3 mr-2" /> Delete
-                            </Button>
+            <div className="space-y-12 mb-20">
+                <div className="flex flex-col gap-8">
+                    <div className="max-w-3xl border-y-2 border-muted/10 py-10 mb-6">
+                        <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed italic whitespace-pre-wrap">
+                            "{thread.content}"
+                        </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-10 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+                        <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10 border-2 border-foreground rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+                                <AvatarFallback className="text-[10px] font-black rounded-none bg-muted/20">
+                                    {thread.user?.name?.slice(0, 2).toUpperCase() || "HB"}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col">
+                                <span className="text-foreground">{thread.user?.name || "Host Builder"}</span>
+                                <span className="text-[9px] text-muted-foreground/40 lowercase">Member since {new Date(thread.user?.created_at).getFullYear() || "2024"}</span>
+                            </div>
                         </div>
-                    )}
-                </div>
-                <div className="flex flex-wrap items-center gap-10 text-[11px] font-black uppercase tracking-widest text-muted-foreground">
-                    <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10 border-2 border-foreground rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
-                            <AvatarFallback className="text-[10px] font-black rounded-none bg-muted/20">
-                                {thread.user?.name?.slice(0, 2).toUpperCase() || "HB"}
-                            </AvatarFallback>
-                        </Avatar>
-                        <span className="text-foreground">{thread.user?.name || "Host Builder"}</span>
-                    </div>
 
-                    <div className="flex items-center py-2 px-6 border-2 border-muted hover:border-foreground transition-all h-12">
-                        <Voting
-                            type="thread"
-                            id={thread.id}
-                            initialUps={thread.ups || 0}
-                            initialDowns={thread.downs || 0}
-                        />
-                    </div>
+                        <div className="h-8 w-[1px] bg-muted/20" />
 
-                    <div className="flex items-center gap-3">
-                        <Clock className="h-4 w-4" />
-                        <span>Discussion in {thread.protocol?.title}</span>
+                        <div className="flex items-center h-12">
+                            <Voting
+                                type="thread"
+                                id={thread.id}
+                                initialUps={thread.ups || 0}
+                                initialDowns={thread.downs || 0}
+                            />
+                        </div>
+
+                        <div className="h-8 w-[1px] bg-muted/20" />
+
+                        <div className="flex items-center gap-3">
+                            <Clock className="h-4 w-4" />
+                            <span>In {thread.protocol?.title} • {new Date(thread.created_at).toLocaleDateString()}</span>
+                        </div>
                     </div>
                 </div>
-            </motion.div>
+            </div>
 
             <section className="space-y-16 pt-20 border-t-2 border-muted/20">
-                <div className="flex items-center justify-between border-b-2 border-muted pb-8">
-                    <div className="space-y-1">
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Dialogue</span>
-                        <h2 className="text-3xl font-black flex items-center gap-3">
-                            <MessageSquare className="h-6 w-6" />
-                            Comments ({thread.comments_count || 0})
-                        </h2>
-                    </div>
+                <SectionHeader
+                    title={`Comments (${thread.comments_count || 0})`}
+                    subtitle="Dialogue"
+                    icon={MessageSquare}
+                >
                     <Button
                         onClick={() => {
                             setParentId(null);
@@ -209,7 +226,7 @@ export default function ThreadDetail() {
                     >
                         Add Comment
                     </Button>
-                </div>
+                </SectionHeader>
 
                 <Dialog open={showCommentDialog} onOpenChange={setShowCommentDialog}>
                     <DialogContent className="rounded-none border-4 border-foreground">
@@ -236,26 +253,52 @@ export default function ThreadDetail() {
                     </DialogContent>
                 </Dialog>
 
-                <Dialog open={isEditingThread} onOpenChange={setIsEditingThread}>
+                <Dialog open={isEditing} onOpenChange={setIsEditing}>
                     <DialogContent className="rounded-none border-4 border-foreground">
                         <DialogHeader>
                             <DialogTitle className="font-black uppercase tracking-widest">
-                                Edit Discussion Title
+                                Edit Discussion
                             </DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleThreadEdit} className="space-y-6 pt-4">
-                            <div className="space-y-2">
-                                <Label className="font-black uppercase text-[10px]">Title</Label>
-                                <Input
-                                    value={editThreadTitle}
-                                    onChange={(e) => setEditThreadTitle(e.target.value)}
-                                    className="rounded-none border-2 h-14 font-bold"
-                                    required
-                                />
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label className="font-black uppercase text-[10px]">Topic</Label>
+                                    <Input
+                                        value={editTitle}
+                                        onChange={(e) => setEditTitle(e.target.value)}
+                                        className="rounded-none border-2 font-bold h-12"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="font-black uppercase text-[10px]">Message</Label>
+                                    <Textarea
+                                        value={editContent}
+                                        onChange={(e) => setEditContent(e.target.value)}
+                                        className="rounded-none border-2 font-medium min-h-[200px]"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="font-black uppercase text-[10px]">Tags (Comma separated)</Label>
+                                    <Input
+                                        value={editTags}
+                                        onChange={(e) => setEditTags(e.target.value)}
+                                        placeholder="e.g. results, dosage, side-effects"
+                                        className="rounded-none border-2 h-12 font-bold"
+                                    />
+                                </div>
                             </div>
-                            <Button type="submit" disabled={submittingThread} className="w-full rounded-none h-14 font-black uppercase tracking-widest bg-foreground text-background">
-                                {submittingThread ? "Saving..." : "Save Changes"}
-                            </Button>
+                            <DialogFooter>
+                                <Button
+                                    type="submit"
+                                    disabled={submittingThread}
+                                    className="w-full rounded-none h-14 font-black uppercase tracking-widest bg-foreground text-background"
+                                >
+                                    {submittingThread ? "Saving..." : "Save Changes"}
+                                </Button>
+                            </DialogFooter>
                         </form>
                     </DialogContent>
                 </Dialog>
@@ -287,32 +330,15 @@ export default function ThreadDetail() {
                             ))}
 
                             {commentsData.last_page > 1 && (
-                                <div className="flex justify-start gap-4 mt-12">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={commentsPage === 1}
-                                        onClick={() => fetchComments(commentsPage - 1)}
-                                        className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-8 h-12"
-                                    >
-                                        Prev
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={commentsPage === commentsData.last_page}
-                                        onClick={() => fetchComments(commentsPage + 1)}
-                                        className="rounded-none border-2 font-black text-[10px] uppercase tracking-widest px-8 h-12"
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
+                                <Pagination
+                                    currentPage={commentsPage}
+                                    totalPages={commentsData.last_page}
+                                    onPageChange={fetchComments}
+                                />
                             )}
                         </>
                     ) : (
-                        <div className="py-32 text-center border-4 border-dashed rounded-[3rem] border-muted/20">
-                            <p className="text-xs font-black text-muted-foreground/20 uppercase tracking-[0.4em]">No dialogue found</p>
-                        </div>
+                        <NoResults message="No dialogue found" />
                     )}
                 </div>
             </section>
