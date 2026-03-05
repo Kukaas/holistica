@@ -13,12 +13,45 @@ class ProtocolController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Protocol::query()->with('author');
+        // 1. If search is requested, use Typesense
+        if ($request->has('search') && !empty($request->search)) {
+            $service = app(\App\Services\TypesenseService::class);
 
-        // Search by title
-        if ($request->has('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+            $params = [
+                'per_page' => 10,
+                'page' => $request->get('page', 1)
+            ];
+
+            // Sorting mapping for Typesense
+            $sort = $request->get('sort', 'recent');
+            if ($sort === 'rating') {
+                $params['sort_by'] = 'avg_rating:desc';
+            }
+            elseif ($sort === 'reviews') {
+                $params['sort_by'] = 'discussion_count:desc';
+            }
+            else {
+                $params['sort_by'] = 'created_at:desc';
+            }
+
+            try {
+                $results = $service->searchProtocols($request->search, $params);
+                $ids = collect($results['hits'])->pluck('document.id');
+
+                // Return Eloquent models based on Typesense IDs to keep author relations etc.
+                return Protocol::with('author')
+                    ->whereIn('id', $ids)
+                    ->orderByRaw("FIELD(id, " . $ids->implode(',') . ")")
+                    ->paginate(10);
+            }
+            catch (\Exception $e) {
+                // Fallback to SQL search if Typesense fails
+                \Log::error('Typesense Search Fail: ' . $e->getMessage());
+            }
         }
+
+        // 2. Default SQL Logic (Fallback or browse mode)
+        $query = Protocol::query()->with('author');
 
         // Sorting
         $sort = $request->get('sort', 'recent');

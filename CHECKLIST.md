@@ -26,11 +26,11 @@ This checklist tracks the progress of the Holistica Community Protocol & Discuss
 - [x] Create Factories and Seeders (12+ protocols, 10+ threads)
 - [x] Seed realistic mock data (comments, reviews, votes)
 
-## Phase 4: Typesense Search Integration [ ]
-- [ ] Create Typesense collections for `Protocols` and `Threads`
-- [ ] Implement automatic indexing (create/update/delete hooks)
-- [ ] Support API filters (Title, Recent, Most Reviewed, Top Rated, Most Upvoted)
-- [ ] Add reindexing CLI command/route
+## Phase 4: Typesense Search Integration [x]
+- [x] Create Typesense collections for `Protocols` and `Threads`
+- [x] Implement automatic indexing (create/update/delete hooks)
+- [x] Support API filters (Title, Recent, Most Reviewed, Top Rated, Most Upvoted)
+- [x] Add reindexing CLI command/route
 
 
 ## Phase 5: Frontend Implementation (Next.js + TailwindCSS + shadcn) [ ]
