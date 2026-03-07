@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Protocol;
+use App\Models\Vote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Builder;
@@ -74,11 +75,13 @@ class ProtocolController extends Controller
                     // Quote the IDs for the SQL FIELD function to handle UUIDs
                     $quotedIds = $ids->map(fn($id) => "'$id'")->implode(',');
 
-                    return Protocol::with('author')
+                    $paginator = Protocol::with('author')
                         ->withCount(['threads', 'reviews'])
                         ->whereIn('id', $ids)
                         ->orderByRaw("FIELD(id, $quotedIds)")
                         ->paginate(10);
+
+                    return $this->appendUserVotes($paginator, auth()->id());
                 }
 
                 // If Typesense returns no hits, return empty pagination instead of fall-through to all
@@ -93,7 +96,8 @@ class ProtocolController extends Controller
                     ->where('title', 'LIKE', "%{$request->search}%")
                     ->orWhere('tags', 'LIKE', "%{$request->search}%");
 
-                return $this->applySorting($query, $request->get('sort'))->paginate(10);
+                $paginator = $this->applySorting($query, $request->get('sort'))->paginate(10);
+                return $this->appendUserVotes($paginator, auth()->id());
             }
         }
 
@@ -101,7 +105,8 @@ class ProtocolController extends Controller
         $query = Protocol::query()->with('author')->withCount(['threads', 'reviews']);
         $query = $this->applySorting($query, $request->get('sort'));
 
-        return $query->paginate(10);
+        $paginator = $query->paginate(10);
+        return $this->appendUserVotes($paginator, auth('sanctum')->id());
     }
 
     /**
@@ -122,14 +127,72 @@ class ProtocolController extends Controller
         }
     }
 
+    /**
+     * Batch-append user_vote to each item in a paginator.
+     * One extra query for all IDs instead of N+1.
+     */
+    private function appendUserVotes($paginator, $userId)
+    {
+        if (!$userId) {
+            $paginator->getCollection()->transform(function ($item) {
+                $item->user_vote = null;
+                return $item;
+            });
+            return $paginator;
+        }
+
+        $ids = $paginator->pluck('id');
+        $votes = Vote::where('user_id', $userId)
+            ->where('votable_type', Protocol::class)
+            ->whereIn('votable_id', $ids)
+            ->pluck('value', 'votable_id');
+
+        $paginator->getCollection()->transform(function ($item) use ($votes) {
+            $item->user_vote = $votes->get($item->id);
+            return $item;
+        });
+
+        return $paginator;
+    }
+
     public function show(Protocol $protocol)
     {
-        return $protocol->loadCount(['threads', 'reviews'])->load('author');
+        $protocol->loadCount(['threads', 'reviews'])->load('author');
+        $userId = auth('sanctum')->id();
+        $protocol->user_vote = $userId
+            ?Vote::where('user_id', $userId)
+            ->where('votable_type', Protocol::class)
+            ->where('votable_id', $protocol->id)
+            ->value('value')
+            : null;
+        return $protocol;
     }
 
     public function threads(Protocol $protocol)
     {
-        return $protocol->threads()->with('user')->withCount('comments')->latest()->paginate(5);
+        $paginator = $protocol->threads()->with('user')->withCount('comments')->latest()->paginate(5);
+        $userId = auth('sanctum')->id();
+
+        if (!$userId) {
+            $paginator->getCollection()->transform(function ($item) {
+                $item->user_vote = null;
+                return $item;
+            });
+            return $paginator;
+        }
+
+        $ids = $paginator->pluck('id');
+        $votes = Vote::where('user_id', $userId)
+            ->where('votable_type', \App\Models\Thread::class)
+            ->whereIn('votable_id', $ids)
+            ->pluck('value', 'votable_id');
+
+        $paginator->getCollection()->transform(function ($item) use ($votes) {
+            $item->user_vote = $votes->get($item->id);
+            return $item;
+        });
+
+        return $paginator;
     }
 
     public function reviews(Protocol $protocol)

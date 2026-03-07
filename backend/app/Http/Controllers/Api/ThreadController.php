@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Thread;
+use App\Models\Vote;
 use Illuminate\Http\Request;
 
 class ThreadController extends Controller
@@ -61,22 +62,54 @@ class ThreadController extends Controller
             });
         }
 
-        return $query->latest()->paginate(15);
+        $paginator = $query->latest()->paginate(15);
+        return $this->appendUserVotes($paginator, auth('sanctum')->id());
     }
 
     public function show(Thread $thread)
     {
-        return $thread->loadCount('comments')->load(['user', 'protocol']);
+        $thread->loadCount('comments')->load(['user', 'protocol']);
+        $userId = auth('sanctum')->id();
+        $thread->user_vote = $userId
+            ?Vote::where('user_id', $userId)
+            ->where('votable_type', Thread::class)
+            ->where('votable_id', $thread->id)
+            ->value('value')
+            : null;
+        return $thread;
     }
 
     public function comments(Thread $thread)
     {
+        $userId = auth('sanctum')->id();
+
         // Paginate root comments only, eagerly loading replies
-        return $thread->comments()
+        $paginator = $thread->comments()
             ->whereNull('parent_id')
             ->with(['user', 'votes', 'replies.user', 'replies.votes'])
             ->latest()
             ->paginate(10);
+
+        // Append user_vote to each comment and its replies using the already-loaded votes
+        $paginator->getCollection()->transform(function ($comment) use ($userId) {
+            $comment->user_vote = $userId
+                ? optional($comment->votes->firstWhere('user_id', $userId))->value
+                : null;
+
+            if ($comment->relationLoaded('replies')) {
+                $comment->replies->transform(function ($reply) use ($userId) {
+                            $reply->user_vote = $userId
+                                ? optional($reply->votes->firstWhere('user_id', $userId))->value
+                                : null;
+                            return $reply;
+                        }
+                        );
+                    }
+
+                    return $comment;
+                });
+
+        return $paginator;
     }
 
     /**
@@ -143,5 +176,31 @@ class ThreadController extends Controller
         }
 
         return response()->json(['message' => 'Thread deleted']);
+    }
+    /**
+     * Batch-append user_vote to each thread in a paginator.
+     */
+    private function appendUserVotes($paginator, $userId)
+    {
+        if (!$userId) {
+            $paginator->getCollection()->transform(function ($item) {
+                $item->user_vote = null;
+                return $item;
+            });
+            return $paginator;
+        }
+
+        $ids = $paginator->pluck('id');
+        $votes = Vote::where('user_id', $userId)
+            ->where('votable_type', Thread::class)
+            ->whereIn('votable_id', $ids)
+            ->pluck('value', 'votable_id');
+
+        $paginator->getCollection()->transform(function ($item) use ($votes) {
+            $item->user_vote = $votes->get($item->id);
+            return $item;
+        });
+
+        return $paginator;
     }
 }

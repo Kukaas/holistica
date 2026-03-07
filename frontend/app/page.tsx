@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { protocolService } from "@/lib/services/protocols";
 import { ArrowRight, Wind } from "lucide-react";
 import Link from "next/link";
@@ -8,22 +8,14 @@ import { motion } from "framer-motion";
 import { ProtocolCard } from "@/components/ProtocolCard";
 
 export default function Home() {
-  const [protocols, setProtocols] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: response, isLoading: loading } = useQuery({
+    queryKey: ['featured-protocols'],
+    queryFn: () => protocolService.getAll({ sort: "rating" }),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+  });
 
-  useEffect(() => {
-    async function fetchProtocols() {
-      try {
-        const response = await protocolService.getAll({ sort: "rating" });
-        setProtocols(response.data.slice(0, 6)); // Show top 6 rated
-      } catch (error) {
-        console.error("Error fetching protocols:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProtocols();
-  }, []);
+  const protocols = response?.data?.slice(0, 6) || [];
 
   return (
     <div className="container min-h-screen py-24 md:py-48 px-6 md:px-8 max-w-7xl mx-auto">
@@ -75,7 +67,7 @@ export default function Home() {
               <div key={i} className="h-80 rounded-none bg-muted animate-pulse border-2" />
             ))
           ) : (
-            protocols.map((protocol, i) => (
+            protocols.map((protocol: any, i: number) => (
               <motion.div
                 key={protocol.id}
                 initial={{ opacity: 0, y: 20 }}

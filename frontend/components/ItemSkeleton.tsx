@@ -4,7 +4,7 @@ export function DiscussionListSkeleton() {
     return (
         <div className="space-y-6 w-full">
             {Array(6).fill(0).map((_, i) => (
-                <div key={i} className="h-32 rounded-none bg-muted/20 animate-pulse border-2 border-muted flex flex-col md:flex-row p-8 md:p-10 justify-between gap-8">
+                <div key={i} className="h-32 rounded-none bg-muted/20 animate-pulse border-2 border-muted flex flex-col lg:flex-row p-8 lg:p-10 justify-between gap-8">
                     <div className="space-y-4 flex-1">
                         <Skeleton className="h-4 w-40 rounded-none bg-muted" />
                         <Skeleton className="h-8 w-3/4 rounded-none bg-muted" />

@@ -29,10 +29,10 @@ export function PageHeader({ backHref, backLabel, title, tags, children }: PageH
                 className="space-y-12 mb-20 border-l-4 border-foreground pl-10"
             >
                 <div className="flex flex-col gap-8">
-                    <div className="flex items-start justify-between gap-8">
+                    <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-8">
                         <div className="flex-1">
                             {tags && tags.length > 0 && (
-                                <div className="flex gap-2 mb-6">
+                                <div className="flex flex-wrap gap-2 mb-6">
                                     {tags.map((tag) => (
                                         <Badge key={tag} variant="outline" className="text-[10px] font-black uppercase tracking-widest px-3 py-1 border-muted">
                                             {tag}
