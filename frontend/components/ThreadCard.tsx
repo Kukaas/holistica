@@ -44,6 +44,7 @@ export function ThreadCard({ thread, showProtocol = false, variant = "card" }: T
                             id={thread.id}
                             initialUps={thread.ups || 0}
                             initialDowns={thread.downs || 0}
+                            userVote={thread.user_vote ?? null}
                         />
                     </div>
                     <span className="w-1.5 h-1.5 rounded-full bg-muted/10" />

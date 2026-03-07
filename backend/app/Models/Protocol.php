@@ -41,4 +41,9 @@ class Protocol extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    public function votes()
+    {
+        return $this->morphMany(Vote::class , 'votable');
+    }
 }

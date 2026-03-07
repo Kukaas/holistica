@@ -87,6 +87,7 @@ export function CommentItem({ comment, allComments, depth = 0, onReply, onUpdate
                                     id={comment.id}
                                     initialUps={comment.ups || 0}
                                     initialDowns={comment.downs || 0}
+                                    userVote={comment.user_vote ?? null}
                                 />
                             </div>
                             <button

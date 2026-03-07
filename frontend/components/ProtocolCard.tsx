@@ -55,6 +55,7 @@ export function ProtocolCard({ protocol, showYear = false }: ProtocolCardProps) 
                                 id={protocol.id}
                                 initialUps={protocol.ups || 0}
                                 initialDowns={protocol.downs || 0}
+                                userVote={protocol.user_vote ?? null}
                             />
                         </div>
                         <span className="flex items-center gap-2">

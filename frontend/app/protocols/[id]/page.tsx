@@ -280,6 +280,7 @@ export default function ProtocolDetail() {
                             id={protocol.id}
                             initialUps={protocol.ups || 0}
                             initialDowns={protocol.downs || 0}
+                            userVote={protocol.user_vote ?? null}
                         />
                     </div>
                 </div>

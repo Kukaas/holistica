@@ -197,6 +197,7 @@ export default function ThreadDetail() {
                                 id={thread.id}
                                 initialUps={thread.ups || 0}
                                 initialDowns={thread.downs || 0}
+                                userVote={thread.user_vote ?? null}
                             />
                         </div>
 
