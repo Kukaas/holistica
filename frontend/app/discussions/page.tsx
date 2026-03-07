@@ -53,7 +53,7 @@ export default function DiscussionsBrowse() {
                     <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block">
                         Community
                     </span>
-                    <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-none">
+                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-none">
                         Discussions
                     </h1>
                     <p className="text-muted-foreground text-lg max-w-xl font-medium">

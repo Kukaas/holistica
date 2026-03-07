@@ -14,9 +14,9 @@ interface ThreadCardProps {
 
 export function ThreadCard({ thread, showProtocol = false, variant = "card" }: ThreadCardProps) {
     const cardContent = (
-        <div className={variant === "card" ? "p-8 md:p-10 flex flex-col md:flex-row md:items-center justify-between gap-8" : "p-10"}>
+        <div className={variant === "card" ? "p-8 md:p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8" : "p-10"}>
             <div className="flex-1">
-                <div className="flex gap-2 mb-4">
+                <div className="flex flex-wrap gap-2 mb-4">
                     {Array.isArray(thread.tags) && thread.tags.map((tag: string) => (
                         <Badge key={tag} variant="outline" className="text-[8px] font-black uppercase tracking-widest px-2 py-0 border-muted">
                             {tag}

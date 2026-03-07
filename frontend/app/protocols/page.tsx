@@ -59,7 +59,7 @@ export default function ProtocolsBrowse() {
                     <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> Home
                 </Link>
 
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-10">
+                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
                     <div className="space-y-4">
                         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block">
                             Registry
@@ -78,8 +78,8 @@ export default function ProtocolsBrowse() {
 
             {/* Filters & Search Bar */}
             <section className="sticky top-24 z-40 bg-background/80 backdrop-blur-xl border-y py-8 mb-16 px-4 -mx-4">
-                <div className="flex flex-col md:flex-row gap-6 max-w-7xl mx-auto items-center">
-                    <div className="relative flex-1 group">
+                <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto items-center w-full">
+                    <div className="relative flex-1 group w-full lg:w-auto">
                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 group-focus-within:text-foreground transition-colors" />
                         <Input
                             placeholder="Search by title, tag, or content..."
@@ -89,9 +89,9 @@ export default function ProtocolsBrowse() {
                         />
                     </div>
 
-                    <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="flex items-center gap-4 w-full lg:w-auto">
                         <Select value={sort} onValueChange={setSort}>
-                            <SelectTrigger className="h-16 w-full md:w-[240px] rounded-none border-2 border-muted font-black uppercase tracking-widest text-[11px] px-8 hover:bg-muted transition-all">
+                            <SelectTrigger className="h-16 w-full lg:w-[240px] rounded-none border-2 border-muted font-black uppercase tracking-widest text-[11px] px-8 hover:bg-muted transition-all">
                                 <SelectValue placeholder="Sort By" />
                             </SelectTrigger>
                             <SelectContent className="rounded-none border-2">

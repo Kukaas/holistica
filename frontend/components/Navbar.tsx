@@ -26,7 +26,7 @@ export function Navbar() {
                 </div>
 
                 {/* Desktop Nav */}
-                <div className="hidden md:flex items-center gap-12 text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+                <div className="hidden lg:flex items-center gap-12 text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
                     <Link href="/protocols" className="transition-colors hover:text-foreground">
                         Protocols
                     </Link>
@@ -46,10 +46,10 @@ export function Navbar() {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <div className="md:hidden">
+                    <div className="lg:hidden">
                         <SearchOverlay variant="icon" />
                     </div>
-                    <Button variant="ghost" size="icon" className="md:hidden rounded-none" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                    <Button variant="ghost" size="icon" className="lg:hidden rounded-none" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                         {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                     </Button>
 
@@ -95,7 +95,7 @@ export function Navbar() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden border-b-2 bg-background overflow-hidden"
+                        className="lg:hidden border-b-2 bg-background overflow-hidden"
                     >
                         <div className="container py-8 flex flex-col gap-6 px-6">
                             <Link href="/protocols" onClick={() => setIsMenuOpen(false)} className="text-lg font-black uppercase tracking-widest">

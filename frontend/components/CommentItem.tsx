@@ -73,14 +73,14 @@ export function CommentItem({ comment, allComments, depth = 0, onReply, onUpdate
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 space-y-3">
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-4">
                             <span className="text-sm font-black uppercase tracking-widest text-foreground">{comment.user?.name || "Anonymous"}</span>
                             <span className="text-[10px] font-bold text-muted-foreground/50">
                                 {new Date(comment.created_at).toLocaleDateString()}
                             </span>
                         </div>
                         <p className="text-[15px] font-medium text-foreground/80 leading-relaxed max-w-2xl whitespace-pre-wrap">{comment.content}</p>
-                        <div className="flex items-center gap-6 pt-2 animate-in fade-in duration-300">
+                        <div className="flex flex-wrap items-center gap-6 pt-2 animate-in fade-in duration-300">
                             <div className="flex items-center py-1 px-4 border-2 border-muted hover:border-foreground transition-all">
                                 <Voting
                                     type="comment"
