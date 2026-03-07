@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { threadService } from "@/lib/services/threads";
 import { Search, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -12,31 +13,18 @@ import { Pagination } from "@/components/Pagination";
 import { NoResults } from "@/components/NoResults";
 
 export default function DiscussionsBrowse() {
-    const [threads, setThreads] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
-    const [pagination, setPagination] = useState<any>(null);
 
-    async function fetchThreads() {
-        setLoading(true);
-        try {
-            const data = await threadService.getAll({ search, page });
-            setThreads(data.data);
-            setPagination(data);
-        } catch (error) {
-            console.error("Error fetching threads:", error);
-        } finally {
-            setLoading(false);
-        }
-    }
+    const { data: queryData, isLoading: loading } = useQuery({
+        queryKey: ['discussions', search, page],
+        queryFn: () => threadService.getAll({ search, page }),
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    });
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            fetchThreads();
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [search, page]);
+    const threads = queryData?.data || [];
+    const pagination = queryData || null;
 
     return (
         <div className="max-w-7xl mx-auto pb-24">
@@ -80,7 +68,7 @@ export default function DiscussionsBrowse() {
                 {loading ? (
                     <DiscussionListSkeleton />
                 ) : threads.length > 0 ? (
-                    threads.map((thread, i) => (
+                    threads.map((thread: any, i: number) => (
                         <motion.div
                             key={thread.id}
                             initial={{ opacity: 0, x: -15 }}

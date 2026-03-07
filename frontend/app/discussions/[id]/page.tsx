@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { threadService } from "@/lib/services/threads";
 import { commentService } from "@/lib/services/comments";
@@ -33,11 +34,7 @@ export default function ThreadDetail() {
     const { id } = useParams();
     const router = useRouter();
     const { user } = useAuth();
-    const [thread, setThread] = useState<any>(null);
-    const [commentsData, setCommentsData] = useState<any>(null);
     const [commentsPage, setCommentsPage] = useState(1);
-    const [loading, setLoading] = useState(true);
-    const [loadingComments, setLoadingComments] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [commentContent, setCommentContent] = useState("");
     const [parentId, setParentId] = useState<string | null>(null);
@@ -50,37 +47,25 @@ export default function ThreadDetail() {
     const [submittingThread, setSubmittingThread] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    async function fetchThread() {
-        try {
+    const { data: thread, isLoading: loading, refetch: refetchThread } = useQuery({
+        queryKey: ['thread', id],
+        queryFn: async () => {
             const data = await threadService.getById(id as string);
-            setThread(data);
             setEditTitle(data.title);
             setEditContent(data.content || "");
             setEditTags(data.tags?.join(", ") || "");
-            fetchComments(1);
-        } catch (error) {
-            console.error("Error fetching thread:", error);
-        } finally {
-            setLoading(false);
-        }
-    }
+            return data;
+        },
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    });
 
-    async function fetchComments(page: number) {
-        setLoadingComments(true);
-        try {
-            const data = await threadService.getComments(id as string, page);
-            setCommentsData(data);
-            setCommentsPage(page);
-        } catch (error) {
-            console.error("Error fetching comments:", error);
-        } finally {
-            setLoadingComments(false);
-        }
-    }
-
-    useEffect(() => {
-        fetchThread();
-    }, [id]);
+    const { data: commentsData, isLoading: loadingComments, refetch: refetchComments } = useQuery({
+        queryKey: ['thread-comments', id, commentsPage],
+        queryFn: () => threadService.getComments(id as string, commentsPage),
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    });
 
     const handleCreateComment = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -95,8 +80,9 @@ export default function ThreadDetail() {
             setCommentContent("");
             setParentId(null);
             setShowCommentDialog(false);
-            fetchComments(1); // Refresh first page
-            fetchThread(); // Refresh thread metadata (like count)
+            setCommentsPage(1);
+            refetchComments();
+            refetchThread();
             toast.success("Reply posted!", { id: toastId });
         } catch (error) {
             console.error("Error creating comment:", error);
@@ -116,7 +102,7 @@ export default function ThreadDetail() {
                 content: editContent,
                 tags: editTags.split(",").map(t => t.trim()).filter(t => t !== "")
             });
-            setThread({ ...thread, title: editTitle, content: editContent, tags: editTags.split(",").map(t => t.trim()).filter(t => t !== "") });
+            refetchThread();
             setIsEditing(false);
             toast.success("Discussion updated!", { id: toastId });
         } catch (error) {
@@ -324,8 +310,9 @@ export default function ThreadDetail() {
                                         setShowCommentDialog(true);
                                     }}
                                     onUpdate={() => {
-                                        fetchComments(1);
-                                        fetchThread();
+                                        setCommentsPage(1);
+                                        refetchComments();
+                                        refetchThread();
                                     }}
                                 />
                             ))}
@@ -334,7 +321,7 @@ export default function ThreadDetail() {
                                 <Pagination
                                     currentPage={commentsPage}
                                     totalPages={commentsData.last_page}
-                                    onPageChange={fetchComments}
+                                    onPageChange={(p) => setCommentsPage(p)}
                                 />
                             )}
                         </>

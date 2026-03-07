@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { protocolService } from "@/lib/services/protocols";
 import { Search, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -21,32 +22,19 @@ import { Pagination } from "@/components/Pagination";
 
 export default function ProtocolsBrowse() {
     const { user } = useAuth();
-    const [protocols, setProtocols] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState("recent");
-    const [pagination, setPagination] = useState<any>(null);
     const [page, setPage] = useState(1);
 
-    async function fetchProtocols() {
-        setLoading(true);
-        try {
-            const data = await protocolService.getAll({ search, sort, page });
-            setProtocols(data.data);
-            setPagination(data);
-        } catch (error) {
-            console.error("Error fetching protocols:", error);
-        } finally {
-            setLoading(false);
-        }
-    }
+    const { data: queryData, isLoading: loading, refetch } = useQuery({
+        queryKey: ['protocols', search, sort, page],
+        queryFn: () => protocolService.getAll({ search, sort, page }),
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        gcTime: 1000 * 60 * 10, // 10 minutes
+    });
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            fetchProtocols();
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [search, sort, page]);
+    const protocols = queryData?.data || [];
+    const pagination = queryData || null;
 
     return (
         <div className="max-w-7xl mx-auto pb-24">
@@ -72,7 +60,7 @@ export default function ProtocolsBrowse() {
                         </p>
                     </div>
 
-                    {user && <CreateProtocolDialog onSuccess={() => fetchProtocols()} />}
+                    {user && <CreateProtocolDialog onSuccess={() => refetch()} />}
                 </div>
             </header>
 
@@ -112,7 +100,7 @@ export default function ProtocolsBrowse() {
                         <div key={i} className="h-80 rounded-none bg-muted animate-pulse border-2" />
                     ))
                 ) : protocols.length > 0 ? (
-                    protocols.map((protocol, i) => (
+                    protocols.map((protocol: any, i: number) => (
                         <motion.div
                             key={protocol.id}
                             initial={{ opacity: 0, y: 15 }}

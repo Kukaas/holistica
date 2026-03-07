@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { protocolService } from "@/lib/services/protocols";
 import { threadService } from "@/lib/services/threads";
@@ -36,14 +37,8 @@ export default function ProtocolDetail() {
     const { user } = useAuth();
     const { id } = useParams();
     const router = useRouter();
-    const [protocol, setProtocol] = useState<any>(null);
-    const [threadsData, setThreadsData] = useState<any>(null);
-    const [reviewsData, setReviewsData] = useState<any>(null);
     const [threadsPage, setThreadsPage] = useState(1);
     const [reviewsPage, setReviewsPage] = useState(1);
-    const [loading, setLoading] = useState(true);
-    const [loadingThreads, setLoadingThreads] = useState(true);
-    const [loadingReviews, setLoadingReviews] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
     // Form States
@@ -56,48 +51,26 @@ export default function ProtocolDetail() {
     const [showReviewDialog, setShowReviewDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    async function fetchProtocol() {
-        try {
-            const data = await protocolService.getById(id as string);
-            setProtocol(data);
-            fetchThreads(1);
-            fetchReviews(1);
-        } catch (error) {
-            console.error("Error fetching protocol:", error);
-        } finally {
-            setLoading(false);
-        }
-    }
+    const { data: protocol, isLoading: loading, refetch: refetchProtocol } = useQuery({
+        queryKey: ['protocol', id],
+        queryFn: () => protocolService.getById(id as string),
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    });
 
-    async function fetchThreads(page: number) {
-        setLoadingThreads(true);
-        try {
-            const data = await protocolService.getThreads(id as string, page);
-            setThreadsData(data);
-            setThreadsPage(page);
-        } catch (error) {
-            console.error("Error fetching threads:", error);
-        } finally {
-            setLoadingThreads(false);
-        }
-    }
+    const { data: threadsData, isLoading: loadingThreads, refetch: refetchThreads } = useQuery({
+        queryKey: ['protocol-threads', id, threadsPage],
+        queryFn: () => protocolService.getThreads(id as string, threadsPage),
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    });
 
-    async function fetchReviews(page: number) {
-        setLoadingReviews(true);
-        try {
-            const data = await protocolService.getReviews(id as string, page);
-            setReviewsData(data);
-            setReviewsPage(page);
-        } catch (error) {
-            console.error("Error fetching reviews:", error);
-        } finally {
-            setLoadingReviews(false);
-        }
-    }
-
-    useEffect(() => {
-        fetchProtocol();
-    }, [id]);
+    const { data: reviewsData, isLoading: loadingReviews, refetch: refetchReviews } = useQuery({
+        queryKey: ['protocol-reviews', id, reviewsPage],
+        queryFn: () => protocolService.getReviews(id as string, reviewsPage),
+        staleTime: 1000 * 60 * 5,
+        gcTime: 1000 * 60 * 10,
+    });
 
     const handleCreateThread = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -119,8 +92,9 @@ export default function ProtocolDetail() {
             setThreadContent("");
             setThreadTags("");
             setShowThreadDialog(false);
-            fetchThreads(1); // Refresh threads
-            fetchProtocol(); // Refresh count
+            setThreadsPage(1);
+            refetchThreads();
+            refetchProtocol();
         } catch (error) {
             console.error("Error creating thread:", error);
         } finally {
@@ -145,8 +119,9 @@ export default function ProtocolDetail() {
             });
             setReviewComment("");
             setShowReviewDialog(false);
-            fetchReviews(1); // Refresh reviews
-            fetchProtocol(); // Refresh rating/count
+            setReviewsPage(1);
+            refetchReviews();
+            refetchProtocol();
         } catch (error) {
             console.error("Error creating review:", error);
         } finally {
@@ -202,7 +177,7 @@ export default function ProtocolDetail() {
         try {
             await protocolService.restore(id as string);
             toast.success("Protocol restored");
-            fetchProtocol();
+            refetchProtocol();
         } catch (error) {
             toast.error("Restoration failed");
         }
@@ -236,7 +211,7 @@ export default function ProtocolDetail() {
                     <div className="flex gap-4">
                         <CreateProtocolDialog
                             protocol={protocol}
-                            onSuccess={fetchProtocol}
+                            onSuccess={() => refetchProtocol()}
                             trigger={
                                 <Button variant="outline" size="sm" className="rounded-none border-2 font-black uppercase tracking-widest text-[10px]">
                                     <Edit className="w-3 h-3 mr-2" /> Edit
@@ -392,7 +367,7 @@ export default function ProtocolDetail() {
                         <Pagination
                             currentPage={threadsPage}
                             totalPages={threadsData.last_page}
-                            onPageChange={fetchThreads}
+                            onPageChange={(p) => setThreadsPage(p)}
                         />
                     </div>
                 ) : (
@@ -479,7 +454,7 @@ export default function ProtocolDetail() {
                         <Pagination
                             currentPage={reviewsPage}
                             totalPages={reviewsData.last_page}
-                            onPageChange={fetchReviews}
+                            onPageChange={(p) => setReviewsPage(p)}
                         />
                     </div>
                 ) : (
