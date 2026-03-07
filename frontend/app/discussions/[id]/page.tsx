@@ -95,7 +95,7 @@ export default function ThreadDetail() {
     const handleThreadEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmittingThread(true);
-        const toastId = toast.loading("Updating discussion...");
+        const toastId = toast.loading("Updating thread...");
         try {
             await threadService.update(id as string, {
                 title: editTitle,
@@ -104,10 +104,10 @@ export default function ThreadDetail() {
             });
             refetchThread();
             setIsEditing(false);
-            toast.success("Discussion updated!", { id: toastId });
+            toast.success("Thread updated!", { id: toastId });
         } catch (error) {
             console.error("Error updating thread:", error);
-            toast.error("Failed to update discussion.", { id: toastId });
+            toast.error("Failed to update thread.", { id: toastId });
         } finally {
             setSubmittingThread(false);
         }
@@ -115,14 +115,14 @@ export default function ThreadDetail() {
 
     const handleThreadDelete = async () => {
         if (!confirm("Are you sure you want to delete this discussion?")) return;
-        const toastId = toast.loading("Deleting discussion...");
+        const toastId = toast.loading("Deleting thread...");
         try {
             await threadService.delete(id as string);
-            toast.success("Discussion deleted!", { id: toastId });
+            toast.success("Thread deleted!", { id: toastId });
             router.push("/discussions");
         } catch (error) {
             console.error("Error deleting thread:", error);
-            toast.error("Failed to delete discussion.", { id: toastId });
+            toast.error("Failed to delete thread.", { id: toastId });
         }
     };
 

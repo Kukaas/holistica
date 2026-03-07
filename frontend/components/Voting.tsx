@@ -51,6 +51,13 @@ export function Voting({ type, id, initialUps = 0, initialDowns = 0, userVote = 
             if (nextValue === -1) setDowns(prev => prev + 1);
 
             setCurrentVote(nextValue === 0 ? null : nextValue);
+            if (nextValue === 0) {
+                toast.success("Vote removed!");
+            } else if (nextValue === 1) {
+                toast.success("Upvoted!");
+            } else {
+                toast.success("Downvoted!");
+            }
         } catch (error) {
             console.error("Voting error:", error);
         } finally {

@@ -81,6 +81,7 @@ export default function ProtocolDetail() {
             return;
         }
         setSubmitting(true);
+        const toastId = toast.loading("Creating thread...");
         try {
             await threadService.create({
                 protocol_id: id,
@@ -95,8 +96,10 @@ export default function ProtocolDetail() {
             setThreadsPage(1);
             refetchThreads();
             refetchProtocol();
+            toast.success("Thread created successfully!", { id: toastId });
         } catch (error) {
             console.error("Error creating thread:", error);
+            toast.error("Failed to create thread.", { id: toastId });
         } finally {
             setSubmitting(false);
         }
@@ -111,6 +114,7 @@ export default function ProtocolDetail() {
             return;
         }
         setSubmitting(true);
+        const toastId = toast.loading("Creating review...");
         try {
             await reviewService.create({
                 protocol_id: id,
@@ -122,8 +126,10 @@ export default function ProtocolDetail() {
             setReviewsPage(1);
             refetchReviews();
             refetchProtocol();
+            toast.success("Review created successfully!", { id: toastId });
         } catch (error) {
             console.error("Error creating review:", error);
+            toast.error("Failed to create review.", { id: toastId });
         } finally {
             setSubmitting(false);
         }
