@@ -192,7 +192,7 @@ class DatabaseSeeder extends Seeder
 
         // Create Comments
         $threads->each(function ($thread) use ($users) {
-            $numComments = rand(4, 9);
+            $numComments = rand(1, 3);
             for ($i = 0; $i < $numComments; $i++) {
                 $comment = $thread->comments()->create([
                     'user_id' => $users->random()->id,
@@ -213,7 +213,7 @@ class DatabaseSeeder extends Seeder
 
                 // Add some nested replies
                 if (rand(0, 1) === 1) {
-                    $numReplies = rand(1, 4);
+                    $numReplies = rand(1, 2);
                     for ($j = 0; $j < $numReplies; $j++) {
                         $comment->replies()->create([
                             'thread_id' => $thread->id,
@@ -236,7 +236,7 @@ class DatabaseSeeder extends Seeder
 
         // Create Reviews
         $protocols->each(function ($protocol) use ($users) {
-            $numReviews = rand(2, 6);
+            $numReviews = rand(1, 3);
             for ($i = 0; $i < $numReviews; $i++) {
                 Review::create([
                     'protocol_id' => $protocol->id,
@@ -260,18 +260,21 @@ class DatabaseSeeder extends Seeder
 
         foreach ([$comments, $reviews] as $items) {
             $items->each(function ($item) use ($users) {
-                $users->random(rand(2, 5))->each(function ($user) use ($item) {
-                        Vote::updateOrCreate(
-                        [
-                            'votable_id' => $item->id,
-                            'votable_type' => get_class($item),
-                            'user_id' => $user->id,
-                        ],
-                        ['value' => rand(0, 1) ? 1 : -1]
-                        );
-                    }
-                    );
-                });
+                $voteCount = rand(0, 2);
+                if ($voteCount > 0) {
+                    $users->random($voteCount)->each(function ($user) use ($item) {
+                                Vote::updateOrCreate(
+                                [
+                                    'votable_id' => $item->id,
+                                    'votable_type' => get_class($item),
+                                    'user_id' => $user->id,
+                                ],
+                                ['value' => rand(0, 1) ? 1 : -1]
+                                );
+                            }
+                            );
+                        }
+                    });
         }
     }
 }
